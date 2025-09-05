@@ -2,12 +2,23 @@
 import React, { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
+// Drapeaux (assure-toi que ces fichiers existent bien dans src/assets/images/)
+import frFlag from '../assets/images/fr.jpg'
+import enFlag from '../assets/images/en.jpg'
+import cnFlag from '../assets/images/cn.jpg'
 
+
+  const languages = [
+    { code: 'fr', label: 'Français', flag: frFlag },
+    { code: 'en', label: 'English', flag: enFlag },
+    { code: 'cn', label: '中文', flag: cnFlag },
+  ]
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPointsDeVenteHovered, setIsPointsDeVenteHovered] = useState(false)
+  const [selectedLang, setSelectedLang] = useState('fr')
   const location = useLocation()
-
+  
   const getLinkClass = (path) => {
     return location.pathname === path
       ? 'font-semibold text-gray-800 border-b-2 border-red-600 pb-2 transition duration-300'
@@ -160,56 +171,126 @@ const Header = () => {
               )}
             </div>
           </div>
-          {/* Barre de recherche (Desktop) */}
-          <div className='relative ml-auto hidden md:block'>
+          {/* Barre de recherche (Desktop) + Sélecteur de langue */}
+          <div className="flex items-center ml-auto space-x-4 hidden md:flex">
+           {/* Barre de recherche */}
+           <div className="relative">
             <input
-              type='text'
-              placeholder='Rechercher sur le site...'
-              className='bg-gray-200 rounded-full py-2 px-4 pl-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300 border border-transparent'
+             type="text"
+             placeholder="Rechercher sur le site..."
+             className="bg-gray-200 rounded-full py-2 px-4 pl-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300 border border-transparent"
             />
             <svg
-              xmlns='http://www.w3.org/2000/svg'
-              className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
+             xmlns="http://www.w3.org/2000/svg"
+             className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-              />
+             <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+             />
             </svg>
+           </div>
+           {/* Sélecteur de langue */}
+           <div className="relative">
+            <select
+             value={selectedLang}
+             onChange={(e) => setSelectedLang(e.target.value)}
+             className="appearance-none bg-gray-200 border border-gray-300 text-gray-800 py-2 pl-10 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer"
+            >
+             {languages.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+               {lang.label}
+              </option>
+             ))}
+            </select>
+            <img
+             src={languages.find((l) => l.code === selectedLang)?.flag}
+             alt="flag"
+             className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2"
+            />
+            <svg
+             xmlns="http://www.w3.org/2000/svg"
+             className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+            >
+             <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+             />
+            </svg>
+           </div>
           </div>
-
+          {/* Sélecteur de langue (Mobile) */}
+          <div className="flex items-center md:hidden mr-2">
+           <div className="relative">
+            <select
+             value={selectedLang}
+             onChange={(e) => setSelectedLang(e.target.value)}
+             className="appearance-none bg-gray-200 border border-gray-300 text-gray-800 py-2 pl-10 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer"
+            >
+             {languages.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+               {lang.label}
+              </option>
+             ))}
+            </select>
+            <img
+             src={languages.find((l) => l.code === selectedLang)?.flag}
+             alt="flag"
+             className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2"
+            />
+            <svg
+             xmlns="http://www.w3.org/2000/svg"
+             className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+            >
+             <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+             />
+            </svg>
+           </div>
+          </div>
           {/* Menu Hamburger (Mobile) */}
           <div className='md:hidden flex items-center'>
-            <button
-              onClick={toggleMenu}
-              className='text-gray-800 focus:outline-none ml-4'
+           <button
+            onClick={toggleMenu}
+            className='text-gray-800 focus:outline-none ml-4'
+           >
+            <svg
+             xmlns='http://www.w3.org/2000/svg'
+             className='h-8 w-8'
+             fill='none'
+             viewBox='0 0 24 24'
+             stroke='currentColor'
             >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-8 w-8'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M4 6h16M4 12h16m-7 6h7'
-                />
-              </svg>
-            </button>
+             <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M4 6h16M4 12h16m-7 6h7'
+             />
+            </svg>
+           </button>
           </div>
-        </div>
+          </div>
 
-        <hr className='my-4 border-gray-200 hidden md:block' />
+          <hr className='my-4 border-gray-200 hidden md:block' />
 
-        {/* --- LIGNE DU BAS (Desktop) --- */}
+          {/* --- LIGNE DU BAS (Desktop) --- */}
         <div className='flex justify-between items-center flex-wrap'>
           <div className='flex-shrink-0 mb-4 md:mb-0'>
             <img src={logo} alt='Logo de PLEINGAZ' className='h-14 w-auto' />

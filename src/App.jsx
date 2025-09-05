@@ -8,6 +8,7 @@ import AboutSection from './components/AboutSection'
 import WhyChooseUs from './components/WhyChooseUs'
 import Testimonials from './components/Testimonials'
 import Footer from './components/Footer'
+import SocialSidebar from './components/SocialSidebar'
 import './index.css'
 
 // Pages pour l'exemple
@@ -42,6 +43,7 @@ function App() {
             path='/'
             element={
               <>
+                <SocialSidebar />
                 <HeroSection />
                 <AboutSection />
                 <ProductCarousel />
