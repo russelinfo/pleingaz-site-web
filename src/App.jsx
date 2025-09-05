@@ -10,11 +10,17 @@ import Testimonials from './components/Testimonials'
 import Footer from './components/Footer'
 import SocialSidebar from './components/SocialSidebar'
 import './index.css'
+import { div } from 'framer-motion/client'
 
 // Pages pour l'exemple
 const AboutUs = () => (
   <div>
     <h1>Page "À propos de nous"</h1>
+  </div>
+)
+const Produits = () => (
+  <div>
+    <h1>Page de nos produits</h1>
   </div>
 )
 const Services = () => (
@@ -54,6 +60,7 @@ function App() {
             }
           />
           <Route path='/a-propos' element={<AboutUs />} />
+          <Route path='/produits' element={<Produits />} />
           <Route path='/services' element={<Services />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/blog' element={<Blog />} />
