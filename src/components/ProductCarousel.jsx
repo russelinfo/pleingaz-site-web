@@ -10,7 +10,9 @@ import btn50 from '../assets/images/btn50.png'
 import vitrer from '../assets/images/vitrer.png'
 import classic from '../assets/images/classic.png'
 import detenteur from '../assets/images/detenteur.png'
+import detenteur2 from '../assets/images/detenteur2.png'
 import tuyo from '../assets/images/tuyo.png'
+import bruleur from '../assets/images/bruleur.png'
 
 const products = [
   {
@@ -18,8 +20,8 @@ const products = [
     image: btn6,
     description:
       'La solution compacte et pratique pour la maison et les loisirs.',
-    fullPrice: '14.000 XAF',
-    emptyPrice: '12.000 XAF',
+    fullPrice: '19.120 XAF',
+    emptyPrice: '3.120 XAF',
     rating: 4.5,
     isGasBottle: true,
   },
@@ -28,8 +30,8 @@ const products = [
     image: btn125,
     description:
       'Notre bouteille standard, idéale pour un usage familial au quotidien.',
-    fullPrice: '40.000 XAF',
-    emptyPrice: '15.000 XAF',
+    fullPrice: '46.500 XAF',
+    emptyPrice: '6.500 XAF',
     rating: 5,
     isGasBottle: true,
   },
@@ -38,16 +40,16 @@ const products = [
     image: btn50,
     description:
       'La solution économique et durable pour les professionnels et les grands foyers.',
-    fullPrice: '75.000 XAF',
-    emptyPrice: '30.000 XAF',
+    fullPrice: '76.000 XAF',
+    emptyPrice: '26.000 XAF',
     rating: 4.8,
     isGasBottle: true,
   },
   {
-    name: 'Plaque à gaz en verre',
+    name: 'Plaque à gaz en vitrer',
     image: vitrer,
     description: 'Design moderne et élégant pour votre cuisine.',
-    price: '65.000 XAF',
+    price: '18.000 XAF',
     rating: 4.2,
     isGasBottle: false,
   },
@@ -55,24 +57,42 @@ const products = [
     name: 'Plaque à gaz classique',
     image: classic,
     description: 'Une solution simple et robuste pour une cuisine efficace.',
-    price: '30.000 XAF',
+    price: '15.000 XAF',
     rating: 4.0,
     isGasBottle: false,
   },
   {
-    name: 'Détendeur PleinGaz',
+    name: 'Détendeur PleinGaz 6 kg',
     image: detenteur,
     description: 'Sécurité et fiabilité pour une utilisation sans souci.',
-    price: '5.000 XAF',
+    price: '3.000 XAF',
     rating: 4.7,
     isGasBottle: false,
   },
   {
-    name: 'Tuyau de gaz',
-    image: tuyo,
-    description: 'Tuyau flexible pour une connexion facile et sécurisée.',
+    name: 'Détendeur PleinGaz 12.5',
+    image: detenteur2,
+    description: 'Sécurité et fiabilité pour une utilisation sans souci.',
+    poids: '6 kg',
     price: '3.000 XAF',
+    rating: 4.7,
+    isGasBottle: false,
+  },
+  {
+    name: 'Tuyau de gaz 1.5m',
+    image: tuyo,
+    taille: '1.5 m',
+    description: 'Tuyau flexible pour une connexion facile et sécurisée.',
+    price: '2.000 XAF',
     rating: 4.9,
+    isGasBottle: false,
+  },
+  {
+    name: 'Bruleur à gaz',
+    image: bruleur,
+    description: 'Un moyens simple et efficace pour cuisiner au gaz.',
+    price: '15.000 XAF',
+    rating: 4.0,
     isGasBottle: false,
   },
 ]
@@ -205,12 +225,12 @@ const ProductCarousel = () => {
 
                       {product.isGasBottle ? (
                         <div className='mb-4 text-white'>
-                          <span className='text-sm font-bold'>Pleine : </span>
+                          <span className='text-sm font-bold'>Bouteille+GPL : </span>
                           <span className='text-lg font-bold'>
                             {product.fullPrice}
                           </span>
                           <br />
-                          <span className='text-sm font-bold'>Vide : </span>
+                          <span className='text-sm font-bold'>Gaz : </span>
                           <span className='text-md font-bold'>
                             {product.emptyPrice}
                           </span>

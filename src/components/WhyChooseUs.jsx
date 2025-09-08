@@ -36,7 +36,7 @@ const WhyChooseUs = () => {
           </h2>
          </div>
          <p className='text-gray-600 max-w-2xl text-lg'>
-          Chez <span className='font-semibold text-red-600'>Plein Gaz</span>,
+          Chez <span className='font-semibold text-red-600'>PLEINGAZ</span>,
           nous vous offrons bien plus qu’un service de livraison : la
           rapidité, la sécurité et un accompagnement client irréprochable au
           quotidien.

@@ -51,7 +51,7 @@ function App() {
               <>
                 <SocialSidebar />
                 <HeroSection />
-                <AboutSection />
+                {/* <AboutSection /> */}
                 <ProductCarousel />
                 <WhyChooseUs />
                 <Testimonials />

@@ -1,6 +1,7 @@
 // src/components/SocialSidebar.jsx
 import React from 'react'
 import {
+  FaTiktok,
   FaFacebookF,
   FaTwitter,
   FaInstagram,
@@ -48,6 +49,14 @@ const SocialSidebar = () => {
         className='bg-white p-3 rounded-full shadow-md hover:bg-blue-800 hover:text-white transition-all duration-300 flex items-center justify-center'
       >
         <FaLinkedinIn className='w-5 h-5 text-blue-800 hover:text-white' />
+      </a>
+      <a
+        href='https://linkedin.com'
+        target='_blank'
+        rel='noopener noreferrer'
+        className='bg-white p-3 rounded-full shadow-md hover:bg-blue-800 hover:text-white transition-all duration-300 flex items-center justify-center'
+      >
+        <FaTiktok className='w-5 h-5 text-blue-800 hover:text-white' />
       </a>
     </div>
   )

@@ -7,7 +7,7 @@ import frFlag from '../assets/images/fr.jpg'
 import enFlag from '../assets/images/en.jpg'
 import cnFlag from '../assets/images/cn.jpg'
 
-
+//declaration du tableau d'objet de tableau
   const languages = [
     { code: 'fr', label: 'Français', flag: frFlag },
     { code: 'en', label: 'English', flag: enFlag },
@@ -36,8 +36,8 @@ const Header = () => {
         <div className='flex justify-between items-center mb-4'>
           {/* Liens Contact, FAQ, Mon Compte, Nos Points De Vente (Desktop) */}
           <div className='hidden md:flex items-center space-x-8'>
-            <a
-              href='#'
+            <NavLink
+              to='/contact'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
             >
               <svg
@@ -55,7 +55,7 @@ const Header = () => {
                 />
               </svg>
               Contact
-            </a>
+            </NavLink>
             <a
               href='#'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
@@ -76,8 +76,8 @@ const Header = () => {
               </svg>
               FAQ
             </a>
-            <a
-              href='#'
+            <NavLink
+              to='/mon-compte'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
             >
               <svg
@@ -95,83 +95,34 @@ const Header = () => {
                 />
               </svg>
               Mon Compte
-            </a>
-            <div
-              className='relative'
-              onMouseEnter={() => setIsPointsDeVenteHovered(true)}
-              onMouseLeave={() => setIsPointsDeVenteHovered(false)}
+            </NavLink>
+            <NavLink
+              to='/points-de-vente'
+              className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
             >
-              <a
-                href='#'
-                className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-4 w-4 mr-1'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
               >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-4 w-4 mr-1'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                  />
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                  />
-                </svg>
-                Nos Points De Vente
-              </a>
-              {isPointsDeVenteHovered && (
-                <div className='absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg'>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:bg-gray-100'
-                  >
-                    Magsi
-                  </a>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:bg-gray-100'
-                  >
-                    Ngoa Ekele
-                  </a>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:bg-gray-100'
-                  >
-                    Dibamba
-                  </a>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:bg-gray-100'
-                  >
-                    Bafoussam
-                  </a>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:text-red-600'
-                    onClick={toggleMenu}
-                  >
-                    Dschang
-                  </a>
-                  <a
-                    href='#'
-                    className='block px-4 py-2 text-gray-800 hover:text-red-600'
-                    onClick={toggleMenu}
-                  >
-                    Bertoua
-                  </a>
-                </div>
-              )}
-            </div>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
+                />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
+                />
+              </svg>
+              Nos Agences
+            </NavLink>
           </div>
-          {/* Barre de recherche (Desktop) + Sélecteur de langue */}
           <div className='flex items-center ml-auto space-x-4 hidden md:flex'>
             {/* Barre de recherche */}
             <div className='relative'>
