@@ -13,7 +13,7 @@ import './index.css'
 import { div } from 'framer-motion/client'
 import Home from  './pages/Home'
 import About from  './pages/About'
-
+import Services from  './pages/Services'
 
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/about' element={<About />} />
+        <Route path='/services' element={<Services />} />
       </Routes>
     </Router>
   )

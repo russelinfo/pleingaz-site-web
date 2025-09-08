@@ -280,7 +280,7 @@ const Header = () => {
               </NavLink>
 
               <NavLink to='/produits' className={getLinkClass('/produits')}>
-               Nos produits
+                Nos produits
               </NavLink>
 
               <NavLink to='/services' className={getLinkClass('/services')}>

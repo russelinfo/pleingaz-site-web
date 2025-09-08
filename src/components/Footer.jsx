@@ -16,6 +16,7 @@ const Footer = () => {
   return (
     <footer className='relative text-white py-12 overflow-hidden'>
       {/* ✅ Dégradé animé en arrière-plan */}
+      {/* <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' /> */}
       <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' />
 
       <div className='relative container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 z-10'>

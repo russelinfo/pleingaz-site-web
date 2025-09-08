@@ -11,6 +11,7 @@ import Testimonials from '../components/Testimonials'
 import SocialSidebar from '../components/SocialSidebar'
 
 
+
 // Le composant Home qui regroupe toutes les sections de la page d'accueil
 const Home = () => {
   return (
@@ -20,7 +21,7 @@ const Home = () => {
       <main>
         <HeroSection />
         <ProductCarousel />
-        <wyhChooseUs />
+        <WhyChooseUs />
         <Testimonials />
       </main>
       <Footer />
