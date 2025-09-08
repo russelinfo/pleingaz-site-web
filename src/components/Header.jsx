@@ -275,7 +275,7 @@ const Header = () => {
               <NavLink to='/' className={getLinkClass('/')}>
                 Accueil
               </NavLink>
-              <NavLink to='/a-propos' className={getLinkClass('/a-propos')}>
+              <NavLink to='/about' className={getLinkClass('/about')}>
                 A propos de nous
               </NavLink>
 
