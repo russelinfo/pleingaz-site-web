@@ -46,8 +46,8 @@ const About = () => {
     <>
      
       {/* Tu dois ajouter ton composant Header ici */}
-      <Header />
-      <SocialSidebar />
+      {/* <Header />
+      <SocialSidebar /> */}
       <main className='py-20'>
         <section className='relative bg-gradient-to-b from-[#f3f4f6] via-[#e5e7eb] to-[#f3f4f6] overflow-hidden'>
           <div className='container mx-auto px-6'>
@@ -187,7 +187,7 @@ const About = () => {
       </main>
 
       {/* Le composant Footer qui sera affiché en bas de la page */}
-      <Footer />
+      {/* <Footer /> */}
     </>
   )
 }

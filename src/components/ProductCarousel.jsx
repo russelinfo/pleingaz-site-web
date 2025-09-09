@@ -19,19 +19,19 @@ const products = [
     name: 'Bouteille de gaz 6 kg',
     image: btn6,
     description:
-      'La solution compacte et pratique pour la maison et les loisirs.',
-    fullPrice: '19.120 XAF',
-    emptyPrice: '3.120 XAF',
+      'Bouteille en acier robuste, livrée pleine de 6 kg de GPL. Idéale pour petites familles et usages occasionnels. ',
+    fullPrice: '16 120 Fcfa',
+    emptyPrice: '3 120 Fcfa',
     rating: 4.5,
     isGasBottle: true,
   },
   {
-    name: 'Bouteille de gaz 12.5 kg',
+    name: 'Bouteille de gaz 12,5 kg',
     image: btn125,
     description:
-      'Notre bouteille standard, idéale pour un usage familial au quotidien.',
-    fullPrice: '46.500 XAF',
-    emptyPrice: '6.500 XAF',
+      'Bouteille robuste contenant 12,5 kg de GPL. Adaptée aux besoins domestiques réguliers.',
+    fullPrice: '26 500 Fcfa',
+    emptyPrice: '6 500 Fcfa',
     rating: 5,
     isGasBottle: true,
   },
@@ -39,59 +39,64 @@ const products = [
     name: 'Bouteille de gaz 50 kg',
     image: btn50,
     description:
-      'La solution économique et durable pour les professionnels et les grands foyers.',
-    fullPrice: '76.000 XAF',
-    emptyPrice: '26.000 XAF',
+      'Grande bouteille de 50 kg pour usages intensifs. Idéale pour restaurants, hôtels et industries.',
+    fullPrice: '76 000 Fcfa',
+    emptyPrice: '26 000 Fcfa',
     rating: 4.8,
     isGasBottle: true,
   },
   {
-    name: 'Plaque à gaz en vitrer',
+    name: 'Plaque à gaz en verre',
     image: vitrer,
-    description: 'Design moderne et élégant pour votre cuisine.',
-    price: '18.000 XAF',
+    description:
+      'Table de cuisson PLEINGAZ moderne en verre trempé. Élégante, résistante à la chaleur, facile à nettoyer.',
+    price: '18 000 Fcfa',
     rating: 4.2,
     isGasBottle: false,
   },
   {
-    name: 'Plaque à gaz classique',
+    name: 'Plaque à gaz en acier',
     image: classic,
-    description: 'Une solution simple et robuste pour une cuisine efficace.',
-    price: '15.000 XAF',
+    description:
+      'Table de cuisson robuste et économique. Adaptée aux usages domestiques quotidiens.',
+    price: '16 000 Fcfa',
     rating: 4.0,
     isGasBottle: false,
   },
   {
-    name: 'Détendeur PleinGaz 6 kg',
+    name: 'Détendeur pour bouteille 12,5 kg',
     image: detenteur,
-    description: 'Sécurité et fiabilité pour une utilisation sans souci.',
-    price: '3.000 XAF',
+    description:
+      'Régulateur de pression pour bouteilles 12,5 kg à robinet. Sécurité et régulation optimale pour usage domestique.',
+    price: '3 000 Fcfa',
     rating: 4.7,
     isGasBottle: false,
   },
   {
-    name: 'Détendeur PleinGaz 12.5',
+    name: 'Détendeur pour bouteille 6 kg',
     image: detenteur2,
-    description: 'Sécurité et fiabilité pour une utilisation sans souci.',
-    poids: '6 kg',
-    price: '3.000 XAF',
+    description:
+      'Détendeur PLEINGAZ conçu pour bouteilles 6 kg à valve. Simple à visser, sûr et pratique.',
+    price: '3 000 Fcfa',
     rating: 4.7,
     isGasBottle: false,
   },
   {
-    name: 'Tuyau de gaz 1.5m',
+    name: 'Tuyau de gaz',
     image: tuyo,
     taille: '1.5 m',
-    description: 'Tuyau flexible pour une connexion facile et sécurisée.',
-    price: '2.000 XAF',
+    description:
+      'Tuyau pour relier bouteille et appareil. Garantit une alimentation en gaz sûre et durable.',
+    price: '2 000 Fcfa',
     rating: 4.9,
     isGasBottle: false,
   },
   {
-    name: 'Bruleur à gaz',
+    name: 'Brûleur vissable pour bouteille 6 kg',
     image: bruleur,
-    description: 'Un moyens simple et efficace pour cuisiner au gaz.',
-    price: '15.000 XAF',
+    description:
+      'Brûleur à fixer directement sur la valve. Solution simple et mobile pour cuisson rapide.',
+    price: '1 500 Fcfa',
     rating: 4.0,
     isGasBottle: false,
   },
@@ -225,7 +230,9 @@ const ProductCarousel = () => {
 
                       {product.isGasBottle ? (
                         <div className='mb-4 text-white'>
-                          <span className='text-sm font-bold'>Bouteille+GPL : </span>
+                          <span className='text-sm font-bold'>
+                            Bouteille+GPL :{' '}
+                          </span>
                           <span className='text-lg font-bold'>
                             {product.fullPrice}
                           </span>

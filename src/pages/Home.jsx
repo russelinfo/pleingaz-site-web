@@ -16,15 +16,15 @@ import SocialSidebar from '../components/SocialSidebar'
 const Home = () => {
   return (
     <>
-      <SocialSidebar />
-      <Header />
+      {/* <SocialSidebar />
+      <Header /> */}
       <main>
         <HeroSection />
         <ProductCarousel />
         <WhyChooseUs />
         <Testimonials />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </>
   )
 }

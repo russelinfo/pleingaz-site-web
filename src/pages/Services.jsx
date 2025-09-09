@@ -9,7 +9,7 @@ import Footer from '../components/Footer'
 import SocialSidebar from '../components/SocialSidebar'
 
 // Import des images
-import livraisonImg from '../assets/images/livraison.jpg'
+import livraisonImg from '../assets/images/livraison.png'
 import proImg from '../assets/images/professionnels.jpg'
 import installImg from '../assets/images/professionnels.jpg'
 import distributeurImg from '../assets/images/distributeur.jpg'
@@ -86,8 +86,7 @@ const Services = () => {
 
   return (
     <>
-      <SocialSidebar />
-      <Header />
+      
       <main className='bg-gray-50 py-20'>
         <div className='container mx-auto px-6'>
           {/* Section d'intro */}
@@ -106,9 +105,8 @@ const Services = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Découvrez la gamme complète de services que PLEINGAZ met à
-              votre disposition, que vous soyez un particulier ou un
-              professionnel.
+              Découvrez la gamme complète de services que PLEINGAZ met à votre
+              disposition, que vous soyez un particulier ou un professionnel.
             </motion.p>
           </div>
 
@@ -170,7 +168,7 @@ const Services = () => {
           </div>
         </div>
       </main>
-      <Footer />
+      
 
       {/* Pop-up (Modale) */}
       <AnimatePresence>
