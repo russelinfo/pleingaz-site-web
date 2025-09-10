@@ -1,69 +1,79 @@
 // src/components/CartPage.jsx
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-
-// Importe les images
-import btn6 from '../../assets/images/btn6.png'
-import btn125 from '../../assets/images/btn12.5.png'
-import btn50 from '../../assets/images/btn50.png'
-import vitrer from '../../assets/images/vitrer.png'
-import classic from '../../assets/images/classic.png'
-import detenteur from '../../assets/images/detenteur.png'
-import detenteur2 from '../../assets/images/detenteur2.png'
-import tuyo from '../../assets/images/tuyo.png'
-import bruleur from '../../assets/images/bruleur.png'
-
-const productsData = [
-  { id: 'prod01', name: 'Bouteille de gaz 6 kg', image: btn6, price: 16120 },
-  {
-    id: 'prod02',
-    name: 'Bouteille de gaz 12,5 kg',
-    image: btn125,
-    price: 26500,
-  },
-  { id: 'prod03', name: 'Bouteille de gaz 50 kg', image: btn50, price: 76000 },
-  { id: 'prod04', name: 'Plaque à gaz en verre', image: vitrer, price: 18000 },
-  { id: 'prod05', name: 'Plaque à gaz en acier', image: classic, price: 16000 },
-  {
-    id: 'prod06',
-    name: 'Détendeur pour bouteille 12,5 kg',
-    image: detenteur,
-    price: 3000,
-  },
-  {
-    id: 'prod07',
-    name: 'Détendeur pour bouteille 6 kg',
-    image: detenteur2,
-    price: 3000,
-  },
-  { id: 'prod08', name: 'Tuyau de gaz', image: tuyo, price: 2000 },
-  {
-    id: 'prod09',
-    name: 'Brûleur vissable pour bouteille 6 kg',
-    image: bruleur,
-    price: 1500,
-  },
-]
+import productsData from '../../data/productsData'
 
 const CartPage = () => {
   const navigate = useNavigate()
-  // Utilise la nouvelle fonction `emptyCart` du contexte
   const { cart, handleUpdateCart, emptyCart } = useCart()
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Paiement à la livraison')
 
-  // Fusionner les données avec les produits du panier de manière sécurisée
+  // Helper function to get the actual price value
+  const getPriceValue = (price) => {
+    if (typeof price === 'string') {
+      return parseFloat(price.replace(/[^\d]/g, '')) || 0
+    }
+    if (typeof price === 'number') {
+      return price
+    }
+    return 0 // Default to 0 if price is undefined or null
+  }
+
   const cartItems = Object.keys(cart || {})
-    .map((id) => {
-      const product = productsData.find((p) => p.id === id)
-      return product ? { ...product, quantity: cart[id] } : null
+    .map((cartId) => {
+      const parts = cartId.split('-')
+      const productId = parts[0]
+      const priceType = parts[1] // 'full' or 'empty' if it's a gas bottle
+
+      const product = productsData.find((p) => p.id === productId)
+
+      if (!product) {
+        return null // Product not found
+      }
+
+      let itemPrice = 0
+      let itemName = product.name
+
+      if (product.isGasBottle) {
+        if (priceType === 'full') {
+          itemPrice = getPriceValue(product.fullPrice)
+          itemName = `${product.name} (avec GPL)`
+        } else if (priceType === 'empty') {
+          itemPrice = getPriceValue(product.emptyPrice)
+          itemName = `${product.name} (Gaz seul)`
+        } else {
+          // This case should ideally not happen if cartIds are formed correctly
+          itemPrice = getPriceValue(product.price) // Fallback to base price if no type
+          itemName = `${product.name} (Inconnu)`
+        }
+      } else {
+        itemPrice = getPriceValue(product.price)
+        itemName = product.name
+      }
+
+      // Ensure itemPrice is correctly determined and not NaN
+      if (isNaN(itemPrice)) {
+        console.error(
+          `Invalid price for product ${productId} with type ${priceType}`
+        )
+        itemPrice = 0 // Prevent NaN propagation
+      }
+
+      return {
+        ...product, // Spread original product data
+        id: cartId, // Use the unique cartId for cart operations
+        quantity: cart[cartId].quantity,
+        price: itemPrice, // Store the determined numeric price for this cart item
+        name: itemName, // Use the descriptive name
+      }
     })
-    .filter((item) => item !== null) // Filtrer les articles non trouvés
+    .filter((item) => item !== null) // Filter out any null entries (e.g., if a product was deleted from data)
 
   const calculateTotal = () => {
     return cartItems.reduce(
@@ -73,7 +83,8 @@ const CartPage = () => {
   }
 
   const handleRemoveItem = (id) => {
-    handleUpdateCart(id, -cart[id])
+    // To remove an item, we effectively set its quantity to 0
+    handleUpdateCart(id, -cart[id].quantity)
   }
 
   const handleValidateOrder = () => {
@@ -98,9 +109,7 @@ const CartPage = () => {
       total: calculateTotal(),
     }
 
-    // Vider le panier après la validation de la commande
     emptyCart()
-
     navigate('/order-confirmation', { state: orderDetails })
   }
 
@@ -118,13 +127,12 @@ const CartPage = () => {
       transition={{ duration: 0.5 }}
     >
       <div className='container mx-auto px-4'>
-        {/* En-tête */}
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
             Votre Panier
           </h1>
           <motion.button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/products')} // Changed to navigate to /products instead of -1
             className='flex items-center text-red-600 font-semibold hover:text-red-700 transition-colors'
             whileHover={{ x: -5 }}
           >
@@ -133,9 +141,7 @@ const CartPage = () => {
           </motion.button>
         </div>
 
-        {/* Contenu */}
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Récapitulatif */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               Récapitulatif de votre commande
@@ -159,17 +165,34 @@ const CartPage = () => {
                         {item.name}
                       </h3>
                       <p className='text-sm text-gray-600'>
-                        Quantité : {item.quantity}
+                        {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
+                        Fcfa
                       </p>
                     </div>
-                    <div className='text-right'>
+                    <div className='text-right flex flex-col items-end'>
                       <p className='text-xl font-bold text-red-600'>
                         {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
                         Fcfa
                       </p>
+                      <div className='flex items-center space-x-2 mt-2'>
+                        <button
+                          onClick={() => handleUpdateCart(item.id, -1)}
+                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50'
+                          disabled={item.quantity <= 1} // Only disable if quantity is 1
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className='font-bold'>{item.quantity}</span>
+                        <button
+                          onClick={() => handleUpdateCart(item.id, 1)}
+                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 transition-colors'
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className='text-red-500 hover:text-red-700 transition-colors'
+                        className='text-red-500 hover:text-red-700 transition-colors mt-2'
                       >
                         <Trash2 size={20} />
                       </button>
@@ -184,7 +207,6 @@ const CartPage = () => {
             </div>
           </div>
 
-          {/* Livraison */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               Informations de livraison

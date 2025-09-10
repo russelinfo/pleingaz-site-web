@@ -4,132 +4,82 @@ import { motion } from 'framer-motion'
 import { Search, ShoppingCart, Plus, Minus, Eye } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useNavigate } from 'react-router-dom'
-
-// Importe les images (assure-toi que ces chemins sont corrects)
-import btn6 from '../../assets/images/btn6.png'
-import btn125 from '../../assets/images/btn12.5.png'
-import btn50 from '../../assets/images/btn50.png'
-import vitrer from '../../assets/images/vitrer.png'
-import classic from '../../assets/images/classic.png'
-import detenteur from '../../assets/images/detenteur.png'
-import detenteur2 from '../../assets/images/detenteur2.png'
-import tuyo from '../../assets/images/tuyo.png'
-import bruleur from '../../assets/images/bruleur.png'
-
-const productsData = [
-  {
-    id: 'prod01',
-    name: 'Bouteille de gaz 6 kg',
-    image: btn6,
-    description: 'Bouteille en acier robuste, livrée pleine de 6 kg de GPL.',
-    fullPrice: 16120,
-    emptyPrice: 3120,
-    isGasBottle: true,
-    inStock: true,
-  },
-  {
-    id: 'prod02',
-    name: 'Bouteille de gaz 12,5 kg',
-    image: btn125,
-    description:
-      'Bouteille robuste contenant 12,5 kg de GPL. Adaptée aux besoins domestiques réguliers.',
-    fullPrice: 26500,
-    emptyPrice: 6500,
-    isGasBottle: true,
-    inStock: true,
-  },
-  {
-    id: 'prod03',
-    name: 'Bouteille de gaz 50 kg',
-    image: btn50,
-    description:
-      'Grande bouteille de 50 kg pour usages intensifs. Idéale pour restaurants, hôtels et industries.',
-    fullPrice: 76000,
-    emptyPrice: 26000,
-    isGasBottle: true,
-    inStock: true,
-  },
-  {
-    id: 'prod04',
-    name: 'Plaque à gaz en verre',
-    image: vitrer,
-    description:
-      'Table de cuisson moderne en verre trempé. Élégante et facile à nettoyer.',
-    price: 18000,
-    isGasBottle: false,
-    inStock: true,
-  },
-  {
-    id: 'prod05',
-    name: 'Plaque à gaz en acier',
-    image: classic,
-    description:
-      'Table de cuisson robuste et économique. Adaptée aux usages domestiques quotidiens.',
-    price: 16000,
-    isGasBottle: false,
-    inStock: true,
-  },
-  {
-    id: 'prod06',
-    name: 'Détendeur pour bouteille 12,5 kg',
-    image: detenteur,
-    description:
-      'Régulateur de pression pour bouteilles 12,5 kg à robinet. Sécurité et régulation optimale.',
-    price: 3000,
-    isGasBottle: false,
-    inStock: true,
-  },
-  {
-    id: 'prod07',
-    name: 'Détendeur pour bouteille 6 kg',
-    image: detenteur2,
-    description:
-      'Détendeur conçu pour bouteilles 6 kg à valve. Simple à visser, sûr et pratique.',
-    price: 3000,
-    isGasBottle: false,
-    inStock: true,
-  },
-  {
-    id: 'prod08',
-    name: 'Tuyau de gaz',
-    image: tuyo,
-    description:
-      'Tuyau pour relier bouteille et appareil. Garantit une alimentation en gaz sûre.',
-    price: 2000,
-    isGasBottle: false,
-    inStock: true,
-  },
-  {
-    id: 'prod09',
-    name: 'Brûleur vissable pour bouteille 6 kg',
-    image: bruleur,
-    description:
-      'Brûleur à fixer directement sur la valve. Solution simple et mobile pour cuisson rapide.',
-    price: 1500,
-    isGasBottle: false,
-    inStock: false,
-  },
-]
+import productsData from '../../data/productsData'
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const { cart, handleUpdateCart, totalItemsInCart } = useCart()
+  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
   const navigate = useNavigate()
 
-  // Filtrer les produits en fonction de la barre de recherche
+  const [selectedPrices, setSelectedPrices] = useState({})
+
   const filteredProducts = productsData.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Navigation vers la page de détails
   const handleViewDetails = (productId) => {
     navigate(`/products/${productId}`)
+  }
+
+  const handlePriceSelection = (productId, priceType) => {
+    setSelectedPrices((prev) => ({
+      ...prev,
+      [productId]: priceType,
+    }))
+  }
+
+  // Helper function to get the actual price value
+  const getPriceValue = (price) => {
+    if (typeof price === 'string') {
+      return parseFloat(price.replace(/[^\d]/g, '')) || 0
+    }
+    if (typeof price === 'number') {
+      return price
+    }
+    return 0 // Default to 0 if price is undefined or null
+  }
+
+  const handleAddToCart = (product) => {
+    const cartId = getCartId(product)
+    const priceType = selectedPrices[product.id]
+    let priceValue
+
+    if (product.isGasBottle) {
+      if (priceType === 'full') {
+        priceValue = getPriceValue(product.fullPrice)
+      } else if (priceType === 'empty') {
+        priceValue = getPriceValue(product.emptyPrice)
+      } else {
+        alert('Veuillez sélectionner une option de prix pour la bouteille.')
+        return
+      }
+    } else {
+      priceValue = getPriceValue(product.price) // Use helper here
+    }
+
+    // Check if item exists and update quantity, otherwise add new item
+    if (cart[cartId] && cart[cartId].quantity > 0) {
+      handleUpdateCart(cartId, 1) // Increment quantity
+    } else {
+      // Add new item to cart
+      addToCart({ ...product, price: priceValue }, priceType)
+    }
+  }
+
+  const getCartId = (product) => {
+    if (product.isGasBottle) {
+      const choice = selectedPrices[product.id]
+      if (choice === 'full') return product.id + '-full'
+      if (choice === 'empty') return product.id + '-empty'
+      // If no choice is made yet for a gas bottle, we can't form a unique cartId for adding to cart.
+      // This case is handled by the alert in handleAddToCart.
+    }
+    return product.id // For non-gas bottles
   }
 
   return (
     <div className='bg-gray-50 min-h-screen pt-20 pb-16'>
       <div className='container mx-auto px-4'>
-        {/* En-tête de la page */}
         <motion.div
           className='flex flex-col md:flex-row justify-between items-center mb-12'
           initial={{ opacity: 0, y: -20 }}
@@ -140,22 +90,20 @@ const ProductsPage = () => {
             Nos Produits
           </h1>
           <div className='flex items-center space-x-4'>
-            {/* Barre de recherche */}
             <div className='relative'>
               <input
                 type='text'
                 placeholder='Rechercher un produit...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300 
-                  focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none'
+                className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300
+                focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none'
               />
               <Search
                 className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
                 size={20}
               />
             </div>
-            {/* Icône du panier */}
             <motion.a
               href='/cart'
               className='relative bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-colors'
@@ -172,91 +120,154 @@ const ProductsPage = () => {
           </div>
         </motion.div>
 
-        {/* Grille de produits */}
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
-          {filteredProducts.map((product) => (
-            <motion.div
-              key={product.id}
-              className='bg-red-600 text-white rounded-2xl shadow-xl overflow-hidden flex flex-col'
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              {/* Image */}
-              <div className='relative w-full h-48 flex justify-center items-center p-4 bg-white'>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className='max-h-full object-contain'
-                />
-              </div>
+          {filteredProducts.map((product) => {
+            const cartId = getCartId(product)
+            const itemInCart = cart[cartId] // Get the item from cart using its unique cartId
 
-              {/* Texte */}
-              <div className='p-6 flex-1 flex flex-col'>
-                <h3 className='text-xl font-bold mb-2'>{product.name}</h3>
-                <p className='text-sm opacity-90 mb-4 flex-1'>
-                  {product.description}
-                </p>
+            return (
+              <motion.div
+                key={product.id}
+                className='bg-red-600 text-white rounded-2xl shadow-xl overflow-hidden flex flex-col'
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <div className='relative w-full h-48 flex justify-center items-center p-4 bg-white'>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className='max-h-full object-contain'
+                  />
+                </div>
 
-                {/* Prix */}
-                <div className='flex justify-between items-center mb-4'>
-                  {product.isGasBottle ? (
-                    <div className='flex flex-col'>
-                      <span className='text-lg font-bold'>
-                        Bouteille + GPL:{' '}
-                        {product.fullPrice.toLocaleString('fr-CM')} Fcfa
-                      </span>
-                      <span className='text-lg font-bold mt-1'>
-                        Gaz seul: {product.emptyPrice.toLocaleString('fr-CM')}{' '}
+                <div className='p-6 flex-1 flex flex-col'>
+                  <h3 className='text-xl font-bold mb-2'>{product.name}</h3>
+                  <p className='text-sm opacity-90 mb-4 flex-1'>
+                    {product.description}
+                  </p>
+
+                  <div className='mb-4'>
+                    {product.isGasBottle ? (
+                      <div className='flex flex-col space-y-2'>
+                        <label className='flex items-center space-x-3 cursor-pointer'>
+                          <input
+                            type='radio'
+                            name={`price-${product.id}`}
+                            checked={selectedPrices[product.id] === 'full'}
+                            onChange={() =>
+                              handlePriceSelection(product.id, 'full')
+                            }
+                            className='w-5 h-5 accent-red-600 cursor-pointer'
+                          />
+                          <span>
+                            Bouteille + GPL:{' '}
+                            {product.fullPrice?.toLocaleString('fr-CM') ||
+                              'N/A'}{' '}
+                            Fcfa
+                          </span>
+                        </label>
+                        <label className='flex items-center space-x-3 cursor-pointer'>
+                          <input
+                            type='radio'
+                            name={`price-${product.id}`}
+                            checked={selectedPrices[product.id] === 'empty'}
+                            onChange={() =>
+                              handlePriceSelection(product.id, 'empty')
+                            }
+                            className='w-5 h-5 accent-red-600 cursor-pointer'
+                          />
+                          <span>
+                            Gaz seul:{' '}
+                            {product.emptyPrice?.toLocaleString('fr-CM') ||
+                              'N/A'}{' '}
+                            Fcfa
+                          </span>
+                        </label>
+                      </div>
+                    ) : (
+                      <span className='text-xl font-bold'>
+                        Prix:{' '}
+                        {getPriceValue(product.price).toLocaleString('fr-CM')}{' '}
                         Fcfa
                       </span>
-                    </div>
-                  ) : (
-                    <span className='text-xl font-bold'>
-                      Prix: {product.price?.toLocaleString('fr-CM')} Fcfa
-                    </span>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Boutons */}
-                <div className='flex items-center justify-between mt-auto space-x-2'>
-                  {product.inStock ? (
-                    <>
-                      <div className='flex items-center space-x-2'>
-                        <button
-                          onClick={() => handleUpdateCart(product.id, -1)}
-                          className='bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50'
-                          disabled={!cart[product.id] || cart[product.id] <= 0}
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className='font-bold w-6 text-center'>
-                          {cart[product.id] || 0}
-                        </span>
-                        <button
-                          onClick={() => handleUpdateCart(product.id, 1)}
-                          className='bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors'
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
+                  <div className='flex items-center justify-between mt-auto space-x-2'>
+                    {product.inStock ? (
+                      <>
+                        <div className='flex items-center space-x-2'>
+                          <button
+                            onClick={() => {
+                              // Prevent updating if it's a gas bottle without a price selected
+                              if (
+                                product.isGasBottle &&
+                                !selectedPrices[product.id]
+                              ) {
+                                alert(
+                                  'Veuillez sélectionner une option de prix pour la bouteille.'
+                                )
+                                return
+                              }
+                              handleUpdateCart(cartId, -1)
+                            }}
+                            className={`bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors ${
+                              (itemInCart?.quantity || 0) <= 0
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                            }`}
+                            disabled={(itemInCart?.quantity || 0) <= 0}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className='font-bold w-6 text-center'>
+                            {itemInCart?.quantity || 0}
+                          </span>
+                          <button
+                            onClick={() => {
+                              // Prevent adding if it's a gas bottle without a price selected
+                              if (
+                                product.isGasBottle &&
+                                !selectedPrices[product.id]
+                              ) {
+                                alert(
+                                  'Veuillez sélectionner une option de prix pour la bouteille.'
+                                )
+                                return
+                              }
+                              handleAddToCart(product)
+                            }}
+                            className={`bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors ${
+                              product.isGasBottle && !selectedPrices[product.id]
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                            }`}
+                            disabled={
+                              product.isGasBottle && !selectedPrices[product.id]
+                            }
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
 
-                      <button
-                        onClick={() => handleViewDetails(product.id)}
-                        className='flex items-center space-x-2 hover:underline font-semibold'
-                      >
-                        <Eye size={18} /> <span>Détails</span>
-                      </button>
-                    </>
-                  ) : (
-                    <span className='font-bold text-yellow-300'>
-                      Rupture de stock
-                    </span>
-                  )}
+                        <button
+                          onClick={() => handleViewDetails(product.id)}
+                          className='flex items-center space-x-2 hover:underline font-semibold'
+                        >
+                          <Eye size={18} /> <span>Détails</span>
+                        </button>
+                      </>
+                    ) : (
+                      <span className='font-bold text-yellow-300'>
+                        Rupture de stock
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </div>
