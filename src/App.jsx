@@ -26,7 +26,7 @@ function App() {
       <CartProvider>
         {' '}
         {/* ✅ Le provider englobe toute l’application */}
-        <SocialSidebar />
+        {/* <SocialSidebar /> */}
         <Header />
         <Routes>
           {/* Routes principales */}

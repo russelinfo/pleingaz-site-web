@@ -86,7 +86,7 @@ const Services = () => {
 
   return (
     <>
-      
+      <SocialSidebar />
       <main className='bg-gray-50 py-20'>
         <div className='container mx-auto px-6'>
           {/* Section d'intro */}

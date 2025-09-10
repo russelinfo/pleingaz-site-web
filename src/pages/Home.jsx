@@ -16,8 +16,8 @@ import SocialSidebar from '../components/SocialSidebar'
 const Home = () => {
   return (
     <>
-      {/* <SocialSidebar />
-      <Header /> */}
+      <SocialSidebar />
+      
       <main>
         <HeroSection />
         <ProductCarousel />
