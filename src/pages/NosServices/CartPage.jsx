@@ -101,16 +101,17 @@ const CartPage = () => {
     }
 
     const orderDetails = {
-      cartItems,
+      orderNumber: 'PGZ-' + Date.now().toString().slice(-6), // Génère un numéro de commande simple
+      items: cartItems, // Renommé 'cartItems' en 'items'
       deliveryDate,
       deliveryAddress,
       deliveryDetails,
       paymentMethod,
-      total: calculateTotal(),
+      totalAmount: calculateTotal(), // Renommé 'total' en 'totalAmount'
     }
 
     emptyCart()
-    navigate('/order-confirmation', { state: orderDetails })
+    navigate('/order-confirmation', { state: { orderDetails } })
   }
 
   const getTomorrowDate = () => {
