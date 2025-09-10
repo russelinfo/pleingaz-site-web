@@ -1,81 +1,81 @@
 // src/pages/nos service/ProductsPage.jsx
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Search, ShoppingCart, Plus, Minus, Eye } from 'lucide-react'
-import { useCart } from '../../context/CartContext'
-import { useNavigate } from 'react-router-dom'
-import productsData from '../../data/productsData'
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Search, ShoppingCart, Plus, Minus, Eye } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useNavigate } from 'react-router-dom';
+import productsData from '../../data/productsData';
 
 const ProductsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
-  const navigate = useNavigate()
+  const [searchTerm, setSearchTerm] = useState('');
+  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart();
+  const navigate = useNavigate();
 
-  const [selectedPrices, setSelectedPrices] = useState({})
+  const [selectedPrices, setSelectedPrices] = useState({});
 
   const filteredProducts = productsData.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   const handleViewDetails = (productId) => {
-    navigate(`/products/${productId}`)
-  }
+    navigate(`/products/${productId}`);
+  };
 
   const handlePriceSelection = (productId, priceType) => {
     setSelectedPrices((prev) => ({
       ...prev,
       [productId]: priceType,
-    }))
-  }
+    }));
+  };
 
   // Helper function to get the actual price value
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
-      return parseFloat(price.replace(/[^\d]/g, '')) || 0
+      return parseFloat(price.replace(/[^\d]/g, '')) || 0;
     }
     if (typeof price === 'number') {
-      return price
+      return price;
     }
-    return 0 // Default to 0 if price is undefined or null
-  }
+    return 0; // Default to 0 if price is undefined or null
+  };
 
   const handleAddToCart = (product) => {
-    const cartId = getCartId(product)
-    const priceType = selectedPrices[product.id]
-    let priceValue
+    const cartId = getCartId(product);
+    const priceType = selectedPrices[product.id];
+    let priceValue;
 
     if (product.isGasBottle) {
       if (priceType === 'full') {
-        priceValue = getPriceValue(product.fullPrice)
+        priceValue = getPriceValue(product.fullPrice);
       } else if (priceType === 'empty') {
-        priceValue = getPriceValue(product.emptyPrice)
+        priceValue = getPriceValue(product.emptyPrice);
       } else {
-        alert('Veuillez sélectionner une option de prix pour la bouteille.')
-        return
+        alert("Veuillez sélectionner une option de prix pour la bouteille.");
+        return;
       }
     } else {
-      priceValue = getPriceValue(product.price) // Use helper here
+      priceValue = getPriceValue(product.price); // Use helper here
     }
-
+    
     // Check if item exists and update quantity, otherwise add new item
     if (cart[cartId] && cart[cartId].quantity > 0) {
-      handleUpdateCart(cartId, 1) // Increment quantity
+      handleUpdateCart(cartId, 1); // Increment quantity
     } else {
       // Add new item to cart
-      addToCart({ ...product, price: priceValue }, priceType)
+      addToCart({ ...product, price: priceValue }, priceType);
     }
-  }
+  };
 
   const getCartId = (product) => {
     if (product.isGasBottle) {
-      const choice = selectedPrices[product.id]
-      if (choice === 'full') return product.id + '-full'
-      if (choice === 'empty') return product.id + '-empty'
+      const choice = selectedPrices[product.id];
+      if (choice === 'full') return product.id + '-full';
+      if (choice === 'empty') return product.id + '-empty';
       // If no choice is made yet for a gas bottle, we can't form a unique cartId for adding to cart.
       // This case is handled by the alert in handleAddToCart.
     }
-    return product.id // For non-gas bottles
-  }
+    return product.id; // For non-gas bottles
+  };
 
   return (
     <div className='bg-gray-50 min-h-screen pt-20 pb-16'>
@@ -122,8 +122,8 @@ const ProductsPage = () => {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
           {filteredProducts.map((product) => {
-            const cartId = getCartId(product)
-            const itemInCart = cart[cartId] // Get the item from cart using its unique cartId
+            const cartId = getCartId(product);
+            const itemInCart = cart[cartId]; // Get the item from cart using its unique cartId
 
             return (
               <motion.div
@@ -149,8 +149,8 @@ const ProductsPage = () => {
 
                   <div className='mb-4'>
                     {product.isGasBottle ? (
-                      <div className='flex flex-col space-y-2'>
-                        <label className='flex items-center space-x-3 cursor-pointer'>
+                      <div className='flex flex-col space-y-3'>
+                        <label className='flex items-center space-x-4 cursor-pointer'>
                           <input
                             type='radio'
                             name={`price-${product.id}`}
@@ -158,16 +158,18 @@ const ProductsPage = () => {
                             onChange={() =>
                               handlePriceSelection(product.id, 'full')
                             }
-                            className='w-5 h-5 accent-red-600 cursor-pointer'
+                            className='w-6 h-6 accent-red-600 cursor-pointer' // ✅ Agrandi le bouton radio
                           />
-                          <span>
+                          <span className='text-lg font-medium'>
+                            {' '}
+                            {/* ✅ Texte plus grand */}
                             Bouteille + GPL:{' '}
                             {product.fullPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
                             Fcfa
                           </span>
                         </label>
-                        <label className='flex items-center space-x-3 cursor-pointer'>
+                        <label className='flex items-center space-x-4 cursor-pointer'>
                           <input
                             type='radio'
                             name={`price-${product.id}`}
@@ -175,9 +177,11 @@ const ProductsPage = () => {
                             onChange={() =>
                               handlePriceSelection(product.id, 'empty')
                             }
-                            className='w-5 h-5 accent-red-600 cursor-pointer'
+                            className='w-6 h-6 accent-red-600 cursor-pointer' // ✅ Agrandi le bouton radio
                           />
-                          <span>
+                          <span className='text-lg font-medium'>
+                            {' '}
+                            {/* ✅ Texte plus grand */}
                             Gaz seul:{' '}
                             {product.emptyPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
@@ -271,7 +275,7 @@ const ProductsPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductsPage
+export default ProductsPage;

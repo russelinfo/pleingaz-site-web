@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useCart } from '../../context/CartContext'
 
 // Correction des chemins d'accès aux images pour la nouvelle structure de dossier
 import btn6 from '../../assets/images/btn6.png'
@@ -15,7 +16,6 @@ import detenteur2 from '../../assets/images/detenteur2.png'
 import tuyo from '../../assets/images/tuyo.png'
 import bruleur from '../../assets/images/bruleur.png'
 
-// Liste des produits (réutilisée et complétée)
 const productsData = [
   {
     id: 'prod01',
@@ -158,152 +158,213 @@ const productsData = [
 ]
 
 const ProductDetail = () => {
-  
-          const { id } = useParams()
-          const navigate = useNavigate()
-          const product = productsData.find((p) => p.id === id)
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
 
-          // Gère le cas où le produit n'est pas trouvé
-          useEffect(() => {
-            if (!product) {
-              navigate('/products')
-            }
-          }, [product, navigate])
+  const [product, setProduct] = useState(null)
+  const [selectedPrice, setSelectedPrice] = useState('full')
 
-          const [quantity, setQuantity] = useState(0)
-
-          const handleUpdateCart = (change) => {
-            const newQuantity = Math.max(0, quantity + change)
-            setQuantity(newQuantity)
-          }
-
-          if (!product) {
-            return null // Retourne null pour éviter d'afficher le reste du composant
-          }
-
-          return (
-            <motion.div
-              className='bg-gray-50 min-h-screen pt-24 pb-16'
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className='container mx-auto px-4'>
-                {/* Bouton de retour */}
-                <motion.button
-                  onClick={() => navigate(-1)}
-                  className='flex items-center text-red-600 font-semibold mb-8 hover:text-red-700 transition-colors'
-                  whileHover={{ x: -5 }}
-                >
-                  <ArrowLeft size={20} className='mr-2' />
-                  Retour à la liste des produits
-                </motion.button>
-
-                {/* Contenu principal de la page de détails */}
-                <div className='bg-white rounded-2xl shadow-xl p-8 flex flex-col md:flex-row gap-8'>
-                  {/* Image du produit */}
-                  <div className='md:w-1/2 flex justify-center items-center'>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className='max-h-[400px] object-contain'
-                    />
-                  </div>
-
-                  {/* Informations sur le produit */}
-                  <div className='md:w-1/2'>
-                    <h1 className='text-3xl font-bold text-gray-800 mb-2'>
-                      {product.name}
-                    </h1>
-                    <p className='text-gray-600 text-sm mb-4'>
-                     
-                    </p>
-
-                    <p className='text-lg text-gray-700 leading-relaxed mb-6'>
-                      {product.description}
-                    </p>
-
-                    {/* Prix */}
-                    <div className='mb-6'>
-                      {product.isGasBottle ? (
-                        <div>
-                          <span className='font-bold text-red-600 text-lg'>
-                            Prix Bouteille + Gaz :
-                          </span>
-                          <span className='ml-2 text-2xl font-bold text-red-600'>
-                            {product.fullPrice.toLocaleString('fr-CM')} Fcfa
-                          </span>
-                          <br />
-                          <span className='font-bold text-gray-600 text-sm'>
-                            Prix Gaz seul :
-                          </span>
-                          <span className='ml-2 text-lg font-bold text-gray-600'>
-                            {product.emptyPrice.toLocaleString('fr-CM')} Fcfa
-                          </span>
-                        </div>
-                      ) : (
-                        <div>
-                          <span className='font-bold text-red-600 text-lg'>Prix :</span>
-                          <span className='ml-2 text-2xl font-bold text-red-600'>
-                            {product.price.toLocaleString('fr-CM')} Fcfa
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Caractéristiques */}
-                    {product.features && (
-                      <div className='mb-6'>
-                        <h3 className='text-xl font-semibold text-gray-800 mb-2'>
-                          Caractéristiques
-                        </h3>
-                        <ul className='list-disc list-inside space-y-1 text-gray-700'>
-                          {product.features.map((feature, index) => (
-                            <li key={index}>{feature}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Contrôles de quantité et statut de stock */}
-                    <div className='flex items-center space-x-4'>
-                      {product.inStock ? (
-                        <>
-                          <div className='flex items-center border border-gray-300 rounded-full px-2 py-1 space-x-2'>
-                            <button
-                              onClick={() => handleUpdateCart(-1)}
-                              className='text-red-600 p-1 hover:bg-gray-200 rounded-full disabled:opacity-50'
-                              disabled={quantity <= 0}
-                            >
-                              <Minus size={20} />
-                            </button>
-                            <span className='font-bold w-6 text-center text-xl'>
-                              {quantity}
-                            </span>
-                            <button
-                              onClick={() => handleUpdateCart(1)}
-                              className='text-red-600 p-1 hover:bg-gray-200 rounded-full'
-                            >
-                              <Plus size={20} />
-                            </button>
-                          </div>
-                          <button className='flex items-center space-x-2 bg-red-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-red-700 transition-colors'>
-                            <ShoppingCart size={20} />
-                            <span>Ajouter au panier</span>
-                          </button>
-                        </>
-                      ) : (
-                        <span className='text-red-500 font-bold text-lg'>
-                          Rupture de stock
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )
+  // Fonction pour déterminer le cartId unique
+  const getCartId = (prod) => {
+    if (prod.isGasBottle) {
+      return `${prod.id}-${selectedPrice}`
+    }
+    return prod.id
   }
+
+  // L'effet met à jour le produit et le cartId lorsque l'ID de l'URL ou le prix sélectionné change
+  useEffect(() => {
+    const foundProduct = productsData.find((p) => p.id === id)
+    if (foundProduct) {
+      setProduct(foundProduct)
+    } else {
+      navigate('/products')
+    }
+  }, [id, navigate])
+
+  if (!product) {
+    return null
+  }
+
+  // Utilise toujours la dernière version du cartId pour l'accès au panier
+  const currentCartId = getCartId(product)
+  const itemInCart = cart[currentCartId] || { quantity: 0 }
+  const quantityInCart = itemInCart.quantity
+
+  const handleUpdate = (action) => {
+    // Vérification de la sélection de prix pour les bouteilles de gaz
+    if (product.isGasBottle && !selectedPrice) {
+      alert('Veuillez sélectionner une option de prix pour le gaz.')
+      return
+    }
+
+    if (action === 'add') {
+      // Si la quantité dans le panier est 0, on utilise addToCart (pour initialiser l'item)
+      if (quantityInCart === 0) {
+        addToCart({ ...product, price: getPriceValue() }, selectedPrice)
+      } else {
+        // Sinon, on incrémente simplement la quantité
+        handleUpdateCart(currentCartId, 1)
+      }
+    } else if (action === 'remove') {
+      // On retire toujours en utilisant handleUpdateCart
+      handleUpdateCart(currentCartId, -1)
+    }
+  }
+
+  const getPriceValue = () => {
+    if (product.isGasBottle) {
+      return selectedPrice === 'full' ? product.fullPrice : product.emptyPrice
+    }
+    return product.price
+  }
+
+  return (
+    <motion.div
+      className='bg-gray-50 min-h-screen pt-24 pb-16'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className='container mx-auto px-4'>
+        {/* En-tête avec bouton de retour et panier */}
+        <div className='flex justify-between items-center mb-8'>
+          <motion.button
+            onClick={() => navigate(-1)}
+            className='flex items-center text-red-600 font-semibold hover:text-red-700 transition-colors'
+            whileHover={{ x: -5 }}
+          >
+            <ArrowLeft size={20} className='mr-2' />
+            Retour à la liste des produits
+          </motion.button>
+
+          <motion.a
+            href='/cart'
+            className='relative bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-colors'
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ShoppingCart size={24} />
+            {totalItemsInCart > 0 && (
+              <span className='absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-gray-800 rounded-full'>
+                {totalItemsInCart}
+              </span>
+            )}
+          </motion.a>
+        </div>
+
+        {/* Contenu principal de la page de détails */}
+        <div className='bg-white rounded-2xl shadow-xl p-8 flex flex-col md:flex-row gap-8'>
+          {/* Image du produit */}
+          <div className='md:w-1/2 flex justify-center items-center'>
+            <img
+              src={product.image}
+              alt={product.name}
+              className='max-h-[400px] object-contain'
+            />
+          </div>
+
+          {/* Informations sur le produit */}
+          <div className='md:w-1/2'>
+            <h1 className='text-3xl font-bold text-gray-800 mb-2'>
+              {product.name}
+            </h1>
+
+            {/* Description détaillée */}
+            <p className='text-lg text-gray-700 leading-relaxed mb-6'>
+              {product.description}
+            </p>
+
+            {/* Prix et radios */}
+            <div className='mb-6'>
+              {product.isGasBottle ? (
+                <div className='flex flex-col space-y-2'>
+                  <label className='flex items-center space-x-3 cursor-pointer'>
+                    <input
+                      type='radio'
+                      name={`price-${product.id}`}
+                      checked={selectedPrice === 'full'}
+                      onChange={() => setSelectedPrice('full')}
+                      className='w-5 h-5 accent-red-600 cursor-pointer'
+                    />
+                    <span>
+                      Bouteille + GPL:{' '}
+                      {product.fullPrice.toLocaleString('fr-CM')} Fcfa
+                    </span>
+                  </label>
+                  <label className='flex items-center space-x-3 cursor-pointer'>
+                    <input
+                      type='radio'
+                      name={`price-${product.id}`}
+                      checked={selectedPrice === 'empty'}
+                      onChange={() => setSelectedPrice('empty')}
+                      className='w-5 h-5 accent-red-600 cursor-pointer'
+                    />
+                    <span>
+                      Gaz seul: {product.emptyPrice.toLocaleString('fr-CM')}{' '}
+                      Fcfa
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div>
+                  <span className='font-bold text-red-600 text-lg'>Prix :</span>
+                  <span className='ml-2 text-2xl font-bold text-red-600'>
+                    {product.price.toLocaleString('fr-CM')} Fcfa
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Caractéristiques */}
+            {product.features && (
+              <div className='mb-6'>
+                <h3 className='text-xl font-semibold text-gray-800 mb-2'>
+                  Caractéristiques
+                </h3>
+                <ul className='list-disc list-inside space-y-1 text-gray-700'>
+                  {product.features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Zone de contrôle de la quantité et boutons d'ajout/retrait */}
+            <div className='flex flex-col space-y-4'>
+              {product.inStock ? (
+                <div className='flex items-center space-x-2'>
+                  <button
+                    onClick={() => handleUpdate('remove')}
+                    className='text-red-600 p-2 rounded-full hover:bg-gray-200 disabled:opacity-50'
+                    disabled={quantityInCart <= 0}
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <span className='font-bold w-6 text-center text-xl'>
+                    {quantityInCart}
+                  </span>
+                  <button
+                    onClick={() => handleUpdate('add')}
+                    className='text-red-600 p-2 rounded-full hover:bg-gray-200 disabled:opacity-50'
+                    disabled={product.isGasBottle && !selectedPrice}
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              ) : (
+                <span className='text-red-500 font-bold text-lg'>
+                  Rupture de stock
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 export default ProductDetail
