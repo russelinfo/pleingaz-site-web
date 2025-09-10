@@ -107,12 +107,11 @@ const productsData = [
       'Brûleur à fixer directement sur la valve. Solution simple et mobile pour cuisson rapide.',
     price: 1500,
     isGasBottle: false,
-    inStock: false, // Exemple de produit en rupture de stock
+    inStock: false,
   },
 ]
 
 const ProductsPage = () => {
-  
   const [searchTerm, setSearchTerm] = useState('')
   const { cart, handleUpdateCart, totalItemsInCart } = useCart()
   const navigate = useNavigate()
@@ -122,7 +121,7 @@ const ProductsPage = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Logique pour la navigation vers la page de détails
+  // Navigation vers la page de détails
   const handleViewDetails = (productId) => {
     navigate(`/products/${productId}`)
   }
@@ -148,7 +147,8 @@ const ProductsPage = () => {
                 placeholder='Rechercher un produit...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:ring-red-500 focus:border-red-500 transition-colors'
+                className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300 
+                  focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none'
               />
               <Search
                 className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
@@ -177,53 +177,55 @@ const ProductsPage = () => {
           {filteredProducts.map((product) => (
             <motion.div
               key={product.id}
-              className='bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col'
+              className='bg-red-600 text-white rounded-2xl shadow-xl overflow-hidden flex flex-col'
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <div className='relative w-full h-48 flex justify-center items-center p-4 bg-gray-100'>
+              {/* Image */}
+              <div className='relative w-full h-48 flex justify-center items-center p-4 bg-white'>
                 <img
                   src={product.image}
                   alt={product.name}
                   className='max-h-full object-contain'
                 />
               </div>
+
+              {/* Texte */}
               <div className='p-6 flex-1 flex flex-col'>
-                <h3 className='text-xl font-bold text-gray-800 mb-2'>
-                  {product.name}
-                </h3>
-                <p className='text-sm text-gray-600 mb-4 flex-1'>
+                <h3 className='text-xl font-bold mb-2'>{product.name}</h3>
+                <p className='text-sm opacity-90 mb-4 flex-1'>
                   {product.description}
                 </p>
+
+                {/* Prix */}
                 <div className='flex justify-between items-center mb-4'>
                   {product.isGasBottle ? (
-                    <div className='text-sm text-gray-700'>
-                      <span className='font-bold text-red-600'>
-                        Bouteille+GPL:
-                      </span>{' '}
-                      {product.fullPrice.toLocaleString('fr-CM')} Fcfa
-                      <br />
-                      <span className='font-bold text-red-600'>
-                        Gaz seul:
-                      </span>{' '}
-                      {product.emptyPrice.toLocaleString('fr-CM')} Fcfa
+                    <div className='flex flex-col'>
+                      <span className='text-lg font-bold'>
+                        Bouteille + GPL:{' '}
+                        {product.fullPrice.toLocaleString('fr-CM')} Fcfa
+                      </span>
+                      <span className='text-lg font-bold mt-1'>
+                        Gaz seul: {product.emptyPrice.toLocaleString('fr-CM')}{' '}
+                        Fcfa
+                      </span>
                     </div>
                   ) : (
-                    <span className='text-xl font-bold text-red-600'>
-                      {product.price.toLocaleString('fr-CM')} Fcfa
+                    <span className='text-xl font-bold'>
+                      Prix: {product.price?.toLocaleString('fr-CM')} Fcfa
                     </span>
                   )}
                 </div>
 
+                {/* Boutons */}
                 <div className='flex items-center justify-between mt-auto space-x-2'>
                   {product.inStock ? (
                     <>
-                      {/* Contrôles de quantité */}
                       <div className='flex items-center space-x-2'>
                         <button
                           onClick={() => handleUpdateCart(product.id, -1)}
-                          className='bg-gray-200 text-gray-700 p-2 rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50'
+                          className='bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50'
                           disabled={!cart[product.id] || cart[product.id] <= 0}
                         >
                           <Minus size={16} />
@@ -233,22 +235,21 @@ const ProductsPage = () => {
                         </span>
                         <button
                           onClick={() => handleUpdateCart(product.id, 1)}
-                          className='bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors'
+                          className='bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors'
                         >
                           <Plus size={16} />
                         </button>
                       </div>
 
-                      {/* Bouton Voir les détails */}
                       <button
                         onClick={() => handleViewDetails(product.id)}
-                        className='flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors font-semibold'
+                        className='flex items-center space-x-2 hover:underline font-semibold'
                       >
                         <Eye size={18} /> <span>Détails</span>
                       </button>
                     </>
                   ) : (
-                    <span className='text-red-500 font-bold'>
+                    <span className='font-bold text-yellow-300'>
                       Rupture de stock
                     </span>
                   )}

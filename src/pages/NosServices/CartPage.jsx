@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useCart } from '../../context/CartContext'
 
 // Importe les images
 import btn6 from '../../assets/images/btn6.png'
@@ -15,119 +16,92 @@ import detenteur2 from '../../assets/images/detenteur2.png'
 import tuyo from '../../assets/images/tuyo.png'
 import bruleur from '../../assets/images/bruleur.png'
 
-// Liste des produits (à importer depuis un fichier de données centralisé idéalement)
 const productsData = [
-  {
-    id: 'prod01',
-    name: 'Bouteille de gaz 6 kg',
-    image: btn6,
-    price: 16120,
-    isGasBottle: true,
-  },
+  { id: 'prod01', name: 'Bouteille de gaz 6 kg', image: btn6, price: 16120 },
   {
     id: 'prod02',
     name: 'Bouteille de gaz 12,5 kg',
     image: btn125,
     price: 26500,
-    isGasBottle: true,
   },
-  {
-    id: 'prod03',
-    name: 'Bouteille de gaz 50 kg',
-    image: btn50,
-    price: 76000,
-    isGasBottle: true,
-  },
-  {
-    id: 'prod04',
-    name: 'Plaque à gaz en verre',
-    image: vitrer,
-    price: 18000,
-    isGasBottle: false,
-  },
-  {
-    id: 'prod05',
-    name: 'Plaque à gaz en acier',
-    image: classic,
-    price: 16000,
-    isGasBottle: false,
-  },
+  { id: 'prod03', name: 'Bouteille de gaz 50 kg', image: btn50, price: 76000 },
+  { id: 'prod04', name: 'Plaque à gaz en verre', image: vitrer, price: 18000 },
+  { id: 'prod05', name: 'Plaque à gaz en acier', image: classic, price: 16000 },
   {
     id: 'prod06',
     name: 'Détendeur pour bouteille 12,5 kg',
     image: detenteur,
     price: 3000,
-    isGasBottle: false,
   },
   {
     id: 'prod07',
     name: 'Détendeur pour bouteille 6 kg',
     image: detenteur2,
     price: 3000,
-    isGasBottle: false,
   },
-  {
-    id: 'prod08',
-    name: 'Tuyau de gaz',
-    image: tuyo,
-    price: 2000,
-    isGasBottle: false,
-  },
+  { id: 'prod08', name: 'Tuyau de gaz', image: tuyo, price: 2000 },
   {
     id: 'prod09',
     name: 'Brûleur vissable pour bouteille 6 kg',
     image: bruleur,
     price: 1500,
-    isGasBottle: false,
   },
 ]
 
-const CartPage = ({ cart, setCart }) => {
+const CartPage = () => {
   const navigate = useNavigate()
+  // Utilise la nouvelle fonction `emptyCart` du contexte
+  const { cart, handleUpdateCart, emptyCart } = useCart()
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Paiement à la livraison')
 
-  // Exemple de panier (à remplacer par les props)
-  const [sampleCart, setSampleCart] = useState({
-    prod01: 2,
-    prod04: 1,
-  })
-
-  // Fusionner les données des produits avec la quantité du panier
-  const cartItems = Object.keys(sampleCart).map((id) => ({
-    ...productsData.find((p) => p.id === id),
-    quantity: sampleCart[id],
-  }))
+  // Fusionner les données avec les produits du panier de manière sécurisée
+  const cartItems = Object.keys(cart || {})
+    .map((id) => {
+      const product = productsData.find((p) => p.id === id)
+      return product ? { ...product, quantity: cart[id] } : null
+    })
+    .filter((item) => item !== null) // Filtrer les articles non trouvés
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => {
-      const price = item.isGasBottle ? item.price : item.price // Correction: 'price' existe déjà, 'fullPrice' non
-      return total + price * item.quantity
-    }, 0)
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    )
   }
 
   const handleRemoveItem = (id) => {
-    setSampleCart((prevCart) => {
-      const newCart = { ...prevCart }
-      delete newCart[id]
-      return newCart
-    })
+    handleUpdateCart(id, -cart[id])
   }
 
   const handleValidateOrder = () => {
-    // Logique de validation de la commande
-    console.log('Commande validée !', {
+    if (cartItems.length === 0) {
+      alert(
+        'Votre panier est vide. Veuillez ajouter des articles pour commander.'
+      )
+      return
+    }
+
+    if (!deliveryDate || !deliveryAddress) {
+      alert("Veuillez remplir la date et l'adresse de livraison.")
+      return
+    }
+
+    const orderDetails = {
       cartItems,
       deliveryDate,
       deliveryAddress,
       deliveryDetails,
       paymentMethod,
-    })
-    alert('Votre commande a été validée avec succès !')
-    // Optionnel: Réinitialiser le panier après validation
-    setSampleCart({})
+      total: calculateTotal(),
+    }
+
+    // Vider le panier après la validation de la commande
+    emptyCart()
+
+    navigate('/order-confirmation', { state: orderDetails })
   }
 
   const getTomorrowDate = () => {
@@ -144,7 +118,7 @@ const CartPage = ({ cart, setCart }) => {
       transition={{ duration: 0.5 }}
     >
       <div className='container mx-auto px-4'>
-        {/* En-tête de la page */}
+        {/* En-tête */}
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
             Votre Panier
@@ -159,9 +133,9 @@ const CartPage = ({ cart, setCart }) => {
           </motion.button>
         </div>
 
-        {/* Contenu du panier */}
+        {/* Contenu */}
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Récapitulatif de la commande */}
+          {/* Récapitulatif */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               Récapitulatif de votre commande
@@ -190,10 +164,7 @@ const CartPage = ({ cart, setCart }) => {
                     </div>
                     <div className='text-right'>
                       <p className='text-xl font-bold text-red-600'>
-                        {(item.isGasBottle
-                          ? item.price * item.quantity
-                          : item.price * item.quantity
-                        ).toLocaleString('fr-CM')}{' '}
+                        {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
                         Fcfa
                       </p>
                       <button
@@ -213,7 +184,7 @@ const CartPage = ({ cart, setCart }) => {
             </div>
           </div>
 
-          {/* Formulaire de livraison et total */}
+          {/* Livraison */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               Informations de livraison
@@ -258,7 +229,7 @@ const CartPage = ({ cart, setCart }) => {
                   htmlFor='deliveryDetails'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Détails (à côté de...)
+                  Détails (à côté de…)
                 </label>
                 <textarea
                   id='deliveryDetails'

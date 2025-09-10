@@ -217,7 +217,7 @@ const ProductDetail = () => {
                       {product.name}
                     </h1>
                     <p className='text-gray-600 text-sm mb-4'>
-                      Référence: **{product.id}**
+                     
                     </p>
 
                     <p className='text-lg text-gray-700 leading-relaxed mb-6'>

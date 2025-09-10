@@ -1,22 +1,21 @@
+// src/components/OrderConfirmationPage.jsx
 import React from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, Truck, MapPin } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
-const OrderConfirmationPage = ({ orderDetails }) => {
+const OrderConfirmationPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { orderDetails } = location.state || {}
 
-  // Données de démo pour l'affichage (à remplacer par les vraies données de la commande)
   const sampleOrder = {
-    orderNumber: 'PGZ-567890',
-    totalAmount: 54000,
-    deliveryDate: '10/10/2025',
-    deliveryAddress: 'Yaoundé, Quartier des Fleurs',
-    paymentMethod: 'Paiement à la livraison',
-    items: [
-      { name: 'Bouteille de gaz 10 kg', quantity: 3, price: 10000 },
-      { name: 'Bouteille de gaz 12 kg', quantity: 2, price: 12000 },
-    ],
+    orderNumber: 'PGZ-000000',
+    totalAmount: 0,
+    deliveryDate: '-',
+    deliveryAddress: 'Non spécifiée',
+    paymentMethod: 'Non spécifié',
+    items: [],
   }
 
   const order = orderDetails || sampleOrder
@@ -45,23 +44,23 @@ const OrderConfirmationPage = ({ orderDetails }) => {
             Merci pour votre commande. Un agent va vous contacter sous peu.
           </p>
 
+          {/* Infos principales */}
           <div className='border-t border-b py-6 mb-6'>
-            <div className='flex justify-between items-center text-left mb-2'>
-              <h3 className='font-bold text-gray-700'>Numéro de commande :</h3>
+            <div className='flex justify-between items-center mb-2'>
+              <h3 className='font-bold text-gray-700'>Numéro :</h3>
               <span className='font-mono text-gray-800'>
                 {order.orderNumber}
               </span>
             </div>
-            <div className='flex justify-between items-center text-left mb-2'>
-              <h3 className='font-bold text-gray-700'>
-                Total de la commande :
-              </h3>
+            <div className='flex justify-between items-center mb-2'>
+              <h3 className='font-bold text-gray-700'>Total :</h3>
               <span className='font-extrabold text-red-600 text-2xl'>
                 {order.totalAmount.toLocaleString('fr-CM')} Fcfa
               </span>
             </div>
           </div>
 
+          {/* Livraison & Paiement */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-8'>
             <div className='bg-gray-100 p-4 rounded-lg'>
               <div className='flex items-center text-red-600 mb-2'>
@@ -86,10 +85,27 @@ const OrderConfirmationPage = ({ orderDetails }) => {
                 Méthode : {order.paymentMethod}
               </p>
               <p className='text-gray-600 text-sm'>
-                Vous payez à la réception de votre commande.
+                Vous payez à la réception.
               </p>
             </div>
           </div>
+
+          {/* Liste des articles */}
+          <h2 className='text-xl font-bold text-gray-800 mb-4'>
+            Articles commandés
+          </h2>
+          <ul className='text-left space-y-2 mb-8'>
+            {order.items.map((item, idx) => (
+              <li key={idx} className='flex justify-between border-b pb-2'>
+                <span>
+                  {item.name} (x{item.quantity})
+                </span>
+                <span className='font-semibold text-red-600'>
+                  {(item.price * item.quantity).toLocaleString('fr-CM')} Fcfa
+                </span>
+              </li>
+            ))}
+          </ul>
 
           <motion.button
             onClick={() => navigate('/')}

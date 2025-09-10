@@ -23,10 +23,11 @@ import { i } from 'framer-motion/client'
 function App() {
   return (
     <Router>
-      <soscialSidebar />
-      <Header />
       <CartProvider>
-
+        {' '}
+        {/* ✅ Le provider englobe toute l’application */}
+        <SocialSidebar />
+        <Header />
         <Routes>
           {/* Routes principales */}
           <Route path='/' element={<Home />} />
@@ -41,11 +42,9 @@ function App() {
             path='/order-confirmation'
             element={<OrderConfirmationPage />}
           />
-
-          {/* Tu peux ajouter d'autres routes ici */}
         </Routes>
+        <Footer />
       </CartProvider>
-      <Footer />
     </Router>
   )
 }

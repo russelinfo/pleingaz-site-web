@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom' // Importez useNavigate
 
 // Import images
 import btn6 from '../assets/images/btn6.png'
@@ -16,6 +17,7 @@ import bruleur from '../assets/images/bruleur.png'
 
 const products = [
   {
+    id: 'prod01', // ✅ Ajout de l'ID unique
     name: 'Bouteille de gaz 6 kg',
     image: btn6,
     description:
@@ -26,6 +28,7 @@ const products = [
     isGasBottle: true,
   },
   {
+    id: 'prod02', // ✅ Ajout de l'ID unique
     name: 'Bouteille de gaz 12,5 kg',
     image: btn125,
     description:
@@ -36,6 +39,7 @@ const products = [
     isGasBottle: true,
   },
   {
+    id: 'prod03', // ✅ Ajout de l'ID unique
     name: 'Bouteille de gaz 50 kg',
     image: btn50,
     description:
@@ -46,6 +50,7 @@ const products = [
     isGasBottle: true,
   },
   {
+    id: 'prod04', // ✅ Ajout de l'ID unique
     name: 'Plaque à gaz en verre',
     image: vitrer,
     description:
@@ -55,6 +60,7 @@ const products = [
     isGasBottle: false,
   },
   {
+    id: 'prod05', // ✅ Ajout de l'ID unique
     name: 'Plaque à gaz en acier',
     image: classic,
     description:
@@ -64,6 +70,7 @@ const products = [
     isGasBottle: false,
   },
   {
+    id: 'prod06', // ✅ Ajout de l'ID unique
     name: 'Détendeur pour bouteille 12,5 kg',
     image: detenteur,
     description:
@@ -73,6 +80,7 @@ const products = [
     isGasBottle: false,
   },
   {
+    id: 'prod07', // ✅ Ajout de l'ID unique
     name: 'Détendeur pour bouteille 6 kg',
     image: detenteur2,
     description:
@@ -82,6 +90,7 @@ const products = [
     isGasBottle: false,
   },
   {
+    id: 'prod08', // ✅ Ajout de l'ID unique
     name: 'Tuyau de gaz',
     image: tuyo,
     taille: '1.5 m',
@@ -92,6 +101,7 @@ const products = [
     isGasBottle: false,
   },
   {
+    id: 'prod09', // ✅ Ajout de l'ID unique
     name: 'Brûleur vissable pour bouteille 6 kg',
     image: bruleur,
     description:
@@ -104,6 +114,7 @@ const products = [
 
 const ProductCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const navigate = useNavigate() // Initialisez useNavigate
 
   // Autoplay toutes les 6s
   useEffect(() => {
@@ -130,6 +141,13 @@ const ProductCarousel = () => {
         ★
       </span>
     ))
+  }
+
+  // ✅ Nouvelle fonction pour gérer le clic sur "Voir plus"
+  const handleViewMore = (productId) => {
+    // Redirige vers la page des produits en ajoutant l'ID dans l'URL
+    // Assure-toi que ton routeur dans App.jsx est configuré pour gérer '/products/:id'
+    navigate(`/products/${productId}`)
   }
 
   return (
@@ -249,7 +267,11 @@ const ProductCarousel = () => {
                       )}
                     </div>
 
-                    <button className='bg-black text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 mt-4'>
+                    {/* ✅ Bouton "Voir plus" avec redirection */}
+                    <button
+                      onClick={() => handleViewMore(product.id)} // Appel de la nouvelle fonction
+                      className='bg-black text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 mt-4'
+                    >
                       Voir plus
                     </button>
                   </motion.div>
