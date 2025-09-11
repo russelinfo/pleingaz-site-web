@@ -10,28 +10,30 @@ import {
   Phone,
   MapPin,
 } from 'lucide-react'
-import logo from '../assets/images/logo.png' // ✅ Import du logo
+import logo from '../assets/images/logo2.png'
 
 const Footer = () => {
   return (
     <footer className='relative text-white py-12 overflow-hidden'>
-      {/* ✅ Dégradé animé en arrière-plan */}
-      {/* <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' /> */}
+      {/* Dégradé animé en arrière-plan */}
       <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' />
 
       <div className='relative container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 z-10'>
-        {/* ✅ Colonne 1 - Logo + description */}
-        <div>
-          <img src={logo} alt='Plein Gaz' className='h-14 mb-4' />
-          <p className='text-sm text-gray-100 leading-relaxed'>
+        {/* Colonne 1 - Logo + description */}
+        <div className='flex flex-col space-y-3'>
+          {/* ✅ Logo ajusté sans espace blanc */}
+          <img src={logo} alt='Logo' className='w-60 h-auto pt-0 m-0 mb-6' />
+
+          {/* ✅ Paragraphe rapproché */}
+          <p className='text-base font-semibold text-gray-100 leading-relaxed m-0'>
             Votre partenaire de confiance pour la livraison rapide, sécurisée et
             fiable de bouteilles de gaz, directement chez vous.
           </p>
         </div>
 
-        {/* ✅ Colonne 2 - Navigation */}
-        <div>
-          <h4 className='text-xl font-semibold mb-4'>Navigation rapide</h4>
+        {/* Colonne 2 - Navigation */}
+        <div className='pt-5'>
+          <h4 className='text-xl font-semibold  mb-4'>Navigation rapide</h4>
           <ul className='space-y-2'>
             <li>
               <a href='/a-propos' className='hover:text-gray-300 transition'>
@@ -56,8 +58,8 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* ✅ Colonne 3 - Contact */}
-        <div>
+        {/* Colonne 3 - Contact */}
+        <div className='pt-5'>
           <h4 className='text-xl font-semibold mb-4'>Contact</h4>
           <ul className='space-y-3'>
             <li className='flex items-center gap-2'>
@@ -71,7 +73,7 @@ const Footer = () => {
             </li>
           </ul>
 
-          {/* ✅ Réseaux sociaux */}
+          {/* Réseaux sociaux */}
           <div className='flex gap-4 mt-4'>
             <a href='#' className='hover:text-gray-300 transition'>
               <Facebook />
@@ -86,13 +88,13 @@ const Footer = () => {
               <Linkedin />
             </a>
             <a href='#' className='hover:text-gray-300 transition'>
-              <FaTiktok size={25} />
+              <FaTiktok size={22} />
             </a>
           </div>
         </div>
       </div>
 
-      {/* ✅ Bas de page */}
+      {/* Bas de page */}
       <div className='relative border-t border-white/20 mt-10 pt-6 text-center text-sm text-gray-200 z-10'>
         © {new Date().getFullYear()} Plein Gaz. Tous droits réservés.
       </div>

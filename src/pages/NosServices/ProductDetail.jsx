@@ -1,7 +1,7 @@
 // src/pages/nos service/ProductDetail.jsx
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react'
+import { Plus, Minus, ArrowLeft, ShoppingCart, Trash2 } from 'lucide-react' // Ajout de l'icône Trash2
 import { useParams, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 
@@ -200,15 +200,12 @@ const ProductDetail = () => {
     }
 
     if (action === 'add') {
-      // Si la quantité dans le panier est 0, on utilise addToCart (pour initialiser l'item)
       if (quantityInCart === 0) {
         addToCart({ ...product, price: getPriceValue() }, selectedPrice)
       } else {
-        // Sinon, on incrémente simplement la quantité
         handleUpdateCart(currentCartId, 1)
       }
     } else if (action === 'remove') {
-      // On retire toujours en utilisant handleUpdateCart
       handleUpdateCart(currentCartId, -1)
     }
   }
@@ -335,25 +332,43 @@ const ProductDetail = () => {
             {/* Zone de contrôle de la quantité et boutons d'ajout/retrait */}
             <div className='flex flex-col space-y-4'>
               {product.inStock ? (
-                <div className='flex items-center space-x-2'>
-                  <button
-                    onClick={() => handleUpdate('remove')}
-                    className='text-red-600 p-2 rounded-full hover:bg-gray-200 disabled:opacity-50'
-                    disabled={quantityInCart <= 0}
-                  >
-                    <Minus size={20} />
-                  </button>
-                  <span className='font-bold w-6 text-center text-xl'>
-                    {quantityInCart}
-                  </span>
-                  <button
-                    onClick={() => handleUpdate('add')}
-                    className='text-red-600 p-2 rounded-full hover:bg-gray-200 disabled:opacity-50'
-                    disabled={product.isGasBottle && !selectedPrice}
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
+                <>
+                  {(quantityInCart || 0) > 0 ? (
+                    // Affichage des boutons +/- et de la quantité
+                    <div className='flex items-center space-x-2'>
+                      <button
+                        onClick={() => handleUpdate('remove')}
+                        className='bg-white text-red-600 px-4 py-2 rounded-full font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors'
+                      >
+                        <Trash2 size={16} />
+                        <span>Retirer</span>
+                      </button>
+                      <span className='font-bold text-center w-6 text-xl'>
+                        {quantityInCart}
+                      </span>
+                      <button
+                        onClick={() => handleUpdate('add')}
+                        className='bg-white text-red-600 px-4 py-2 rounded-full font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors'
+                      >
+                        <ShoppingCart size={16} />
+                        <span>Ajouter</span>
+                      </button>
+                    </div>
+                  ) : (
+                    // Affichage du bouton "Ajouter au panier"
+                    <button
+                      onClick={() => handleUpdate('add')}
+                      className={`bg-red-600 text-white px-6 py-3 rounded-full font-bold text-lg hover:bg-red-700 transition-colors ${
+                        product.isGasBottle && !selectedPrice
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                      }`}
+                      disabled={product.isGasBottle && !selectedPrice}
+                    >
+                      Ajouter au panier
+                    </button>
+                  )}
+                </>
               ) : (
                 <span className='text-red-500 font-bold text-lg'>
                   Rupture de stock

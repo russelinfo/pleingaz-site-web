@@ -1,81 +1,79 @@
 // src/pages/nos service/ProductsPage.jsx
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, ShoppingCart, Plus, Minus, Eye } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
-import { useNavigate } from 'react-router-dom';
-import productsData from '../../data/productsData';
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Search, ShoppingCart, Plus, Minus, Eye, Trash2 } from 'lucide-react'
+import { useCart } from '../../context/CartContext'
+import { useNavigate } from 'react-router-dom'
+import productsData from '../../data/productsData'
 
 const ProductsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart();
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('')
+  const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
+  const navigate = useNavigate()
 
-  const [selectedPrices, setSelectedPrices] = useState({});
+  const [selectedPrices, setSelectedPrices] = useState({})
 
   const filteredProducts = productsData.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  )
 
   const handleViewDetails = (productId) => {
-    navigate(`/products/${productId}`);
-  };
+    navigate(`/products/${productId}`)
+  }
 
   const handlePriceSelection = (productId, priceType) => {
     setSelectedPrices((prev) => ({
       ...prev,
       [productId]: priceType,
-    }));
-  };
+    }))
+  }
 
   // Helper function to get the actual price value
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
-      return parseFloat(price.replace(/[^\d]/g, '')) || 0;
+      return parseFloat(price.replace(/[^\d]/g, '')) || 0
     }
     if (typeof price === 'number') {
-      return price;
+      return price
     }
-    return 0; // Default to 0 if price is undefined or null
-  };
+    return 0 // Default to 0 if price is undefined or null
+  }
 
   const handleAddToCart = (product) => {
-    const cartId = getCartId(product);
-    const priceType = selectedPrices[product.id];
-    let priceValue;
+    const cartId = getCartId(product)
+    const priceType = selectedPrices[product.id]
+    let priceValue
 
     if (product.isGasBottle) {
       if (priceType === 'full') {
-        priceValue = getPriceValue(product.fullPrice);
+        priceValue = getPriceValue(product.fullPrice)
       } else if (priceType === 'empty') {
-        priceValue = getPriceValue(product.emptyPrice);
+        priceValue = getPriceValue(product.emptyPrice)
       } else {
-        alert("Veuillez sélectionner une option de prix pour la bouteille.");
-        return;
+        alert('Veuillez sélectionner une option de prix pour la bouteille.')
+        return
       }
     } else {
-      priceValue = getPriceValue(product.price); // Use helper here
+      priceValue = getPriceValue(product.price) // Use helper here
     }
-    
+
     // Check if item exists and update quantity, otherwise add new item
     if (cart[cartId] && cart[cartId].quantity > 0) {
-      handleUpdateCart(cartId, 1); // Increment quantity
+      handleUpdateCart(cartId, 1) // Increment quantity
     } else {
       // Add new item to cart
-      addToCart({ ...product, price: priceValue }, priceType);
+      addToCart({ ...product, price: priceValue }, priceType)
     }
-  };
+  }
 
   const getCartId = (product) => {
     if (product.isGasBottle) {
-      const choice = selectedPrices[product.id];
-      if (choice === 'full') return product.id + '-full';
-      if (choice === 'empty') return product.id + '-empty';
-      // If no choice is made yet for a gas bottle, we can't form a unique cartId for adding to cart.
-      // This case is handled by the alert in handleAddToCart.
+      const choice = selectedPrices[product.id]
+      if (choice === 'full') return product.id + '-full'
+      if (choice === 'empty') return product.id + '-empty'
     }
-    return product.id; // For non-gas bottles
-  };
+    return product.id
+  }
 
   return (
     <div className='bg-gray-50 min-h-screen pt-20 pb-16'>
@@ -97,7 +95,7 @@ const ProductsPage = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300
-                focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none'
+                 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none'
               />
               <Search
                 className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
@@ -122,8 +120,8 @@ const ProductsPage = () => {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
           {filteredProducts.map((product) => {
-            const cartId = getCartId(product);
-            const itemInCart = cart[cartId]; // Get the item from cart using its unique cartId
+            const cartId = getCartId(product)
+            const itemInCart = cart[cartId] // Get the item from cart using its unique cartId
 
             return (
               <motion.div
@@ -158,11 +156,10 @@ const ProductsPage = () => {
                             onChange={() =>
                               handlePriceSelection(product.id, 'full')
                             }
-                            className='w-6 h-6 accent-red-600 cursor-pointer' // ✅ Agrandi le bouton radio
+                            className='w-6 h-6 accent-red-600 cursor-pointer'
                           />
                           <span className='text-lg font-medium'>
                             {' '}
-                            {/* ✅ Texte plus grand */}
                             Bouteille + GPL:{' '}
                             {product.fullPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
@@ -177,11 +174,10 @@ const ProductsPage = () => {
                             onChange={() =>
                               handlePriceSelection(product.id, 'empty')
                             }
-                            className='w-6 h-6 accent-red-600 cursor-pointer' // ✅ Agrandi le bouton radio
+                            className='w-6 h-6 accent-red-600 cursor-pointer'
                           />
                           <span className='text-lg font-medium'>
                             {' '}
-                            {/* ✅ Texte plus grand */}
                             Gaz seul:{' '}
                             {product.emptyPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
@@ -202,59 +198,83 @@ const ProductsPage = () => {
                     {product.inStock ? (
                       <>
                         <div className='flex items-center space-x-2'>
-                          <button
-                            onClick={() => {
-                              // Prevent updating if it's a gas bottle without a price selected
-                              if (
-                                product.isGasBottle &&
-                                !selectedPrices[product.id]
-                              ) {
-                                alert(
-                                  'Veuillez sélectionner une option de prix pour la bouteille.'
-                                )
-                                return
-                              }
-                              handleUpdateCart(cartId, -1)
-                            }}
-                            className={`bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors ${
-                              (itemInCart?.quantity || 0) <= 0
-                                ? 'opacity-50 cursor-not-allowed'
-                                : ''
-                            }`}
-                            disabled={(itemInCart?.quantity || 0) <= 0}
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className='font-bold w-6 text-center'>
-                            {itemInCart?.quantity || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              // Prevent adding if it's a gas bottle without a price selected
-                              if (
-                                product.isGasBottle &&
-                                !selectedPrices[product.id]
-                              ) {
-                                alert(
-                                  'Veuillez sélectionner une option de prix pour la bouteille.'
-                                )
-                                return
-                              }
-                              handleAddToCart(product)
-                            }}
-                            className={`bg-white text-red-600 p-2 rounded-full hover:bg-gray-200 transition-colors ${
-                              product.isGasBottle && !selectedPrices[product.id]
-                                ? 'opacity-50 cursor-not-allowed'
-                                : ''
-                            }`}
-                            disabled={
-                              product.isGasBottle && !selectedPrices[product.id]
-                            }
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
+                          {/* Affiche le bouton "Ajouter au panier" si le produit n'est pas dans le panier, sinon affiche les boutons +/- et la quantité */}
+                          {(itemInCart?.quantity || 0) > 0 ? (
+                            <>
+                              {/* Bouton pour retirer */}
+                              <button
+                                onClick={() => {
+                                  if (
+                                    product.isGasBottle &&
+                                    !selectedPrices[product.id]
+                                  ) {
+                                    alert(
+                                      'Veuillez sélectionner une option de prix pour la bouteille.'
+                                    )
+                                    return
+                                  }
+                                  handleUpdateCart(cartId, -1)
+                                }}
+                                className={`bg-white text-red-600 px-3 py-2 rounded-full font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors`}
+                              >
+                                <Minus size={16} />
+                              </button>
 
+                              {/* Affichage de la quantité */}
+                              <span className='font-bold w-6 text-center text-xl'>
+                                {itemInCart.quantity}
+                              </span>
+
+                              {/* Bouton pour ajouter (incrémenter) */}
+                              <button
+                                onClick={() => {
+                                  if (
+                                    product.isGasBottle &&
+                                    !selectedPrices[product.id]
+                                  ) {
+                                    alert(
+                                      'Veuillez sélectionner une option de prix pour la bouteille.'
+                                    )
+                                    return
+                                  }
+                                  handleAddToCart(product)
+                                }}
+                                className={`bg-white text-red-600 px-3 py-2 rounded-full font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors`}
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            // Bouton "Ajouter au panier"
+                            <button
+                              onClick={() => {
+                                if (
+                                  product.isGasBottle &&
+                                  !selectedPrices[product.id]
+                                ) {
+                                  alert(
+                                    'Veuillez sélectionner une option de prix pour la bouteille.'
+                                  )
+                                  return
+                                }
+                                handleAddToCart(product)
+                              }}
+                              className={`bg-white text-red-600 px-4 py-2 rounded-full font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors ${
+                                product.isGasBottle &&
+                                !selectedPrices[product.id]
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : ''
+                              }`}
+                              disabled={
+                                product.isGasBottle &&
+                                !selectedPrices[product.id]
+                              }
+                            >
+                              <ShoppingCart size={16} />
+                              <span>Ajouter au panier</span>
+                            </button>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleViewDetails(product.id)}
                           className='flex items-center space-x-2 hover:underline font-semibold'
@@ -275,7 +295,7 @@ const ProductsPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProductsPage;
+export default ProductsPage

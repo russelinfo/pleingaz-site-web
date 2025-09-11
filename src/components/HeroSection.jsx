@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Truck, ShieldCheck, Clock } from 'lucide-react'
 
-// Importe les trois images
 import heroImage1 from '../assets/images/hero1.jpg'
 import heroImage2 from '../assets/images/hero2.jpg'
 import heroImage3 from '../assets/images/hero3.jpg'
@@ -22,13 +21,15 @@ const HeroSection = () => {
 
   return (
     <section className='relative w-full min-h-[550px] flex items-center overflow-hidden'>
-      {/* ✅ Arrière-plan dégradé animé */}
+      {/* ✅ Dégradé animé */}
       <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' />
 
-      {/* Colonne gauche : Texte */}
-      <div className='container mx-auto flex flex-col md:flex-row items-center justify-between px-6 py-12 md:py-20 relative z-10'>
-        <div className='w-full md:w-1/2 text-white space-y-6 z-20'>
-          {/* Bloc pour PLEINGAZ centré seul */}
+      {/* ✅ Overlay plus sombre pour petits écrans */}
+      <div className='absolute inset-0 bg-black/50 md:hidden z-10'></div>
+
+      {/* Colonne gauche */}
+      <div className='container mx-auto flex flex-col md:flex-row items-center justify-between px-6 py-12 md:py-20 relative z-20'>
+        <div className='w-full md:w-1/2 text-white space-y-6'>
           <div className='flex justify-center'>
             <motion.h1
               initial={{ x: 150, opacity: 0 }}
@@ -40,7 +41,6 @@ const HeroSection = () => {
             </motion.h1>
           </div>
 
-          {/* Slogan animé */}
           <motion.h2
             initial={{ x: -150, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -50,20 +50,18 @@ const HeroSection = () => {
             Bouteilles Toujours Pleines
           </motion.h2>
 
-          {/* Nouveau texte descriptif animé */}
           <motion.p
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, ease: 'easeOut', delay: 0.6 }}
             className='text-lg sm:text-xl leading-relaxed text-gray-100 text-center max-w-2xl mx-auto'
           >
-            Chez PLEINGAZ, nous croyons que l'accès à une énergie de qualité
-            ne devrait jamais être un souci. C'est pourquoi nous vous
-            garantissons une livraison rapide et des accessoires certifiés, pour
-            votre sécurité et votre tranquillité d’esprit.
+            Chez PLEINGAZ, nous croyons que l'accès à une énergie de qualité ne
+            devrait jamais être un souci. C'est pourquoi nous vous garantissons
+            une livraison rapide et des accessoires certifiés, pour votre
+            sécurité et votre tranquillité d’esprit.
           </motion.p>
 
-          {/* Section des atouts clés (ajoutée dans la zone de texte) */}
           <motion.div
             className='flex justify-center flex-wrap gap-6 md:gap-12 mt-8'
             initial={{ y: 50, opacity: 0 }}
@@ -90,7 +88,6 @@ const HeroSection = () => {
             </div>
           </motion.div>
 
-          {/* Bouton animé */}
           <motion.div className='flex justify-center'>
             <motion.button
               initial={{ y: 60, opacity: 0 }}
@@ -106,7 +103,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Colonne droite : Image avec découpe concave */}
+      {/* Colonne droite */}
       <div className='absolute right-0 top-0 h-full w-1/2'>
         {heroImages.map((image, index) => (
           <img
