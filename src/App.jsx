@@ -19,7 +19,11 @@ import ProductDetail from './pages/NosServices/ProductDetail'
 import CartPage from './pages/NosServices/CartPage'
 import OrderConfirmationPage from './pages/NosServices/OrderConfirmationPage'
 import { i } from 'framer-motion/client'
-
+import Agences from './pages/Agences'
+import FAQ from './pages/FAQ'
+import Contact from './pages/Contact'
+import BlogPage from './pages/BlogPage'
+import ReviewForm from './pages/ReviewForm'
 function App() {
   return (
     <Router>
@@ -33,14 +37,20 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/about' element={<About />} />
           <Route path='/services' element={<Services />} />
+          <Route path='/agences' element={<Agences />} />
 
           {/* Routes du système de commande */}
           <Route path='/products' element={<ProductsPage />} />
           <Route path='/products/:id' element={<ProductDetail />} />
           <Route path='/cart' element={<CartPage />} />
+          <Route path='/faq' element={<FAQ />} />
+          <Route path='/blog' element={<BlogPage />} />
+          <Route path='/review' element={<ReviewForm />} />
+          <Route path='/contact' element={<Contact />} />
           <Route
             path='/order-confirmation'
             element={<OrderConfirmationPage />}
+            
           />
         </Routes>
         <Footer />

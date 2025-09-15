@@ -9,8 +9,8 @@ import Footer from '../components/Footer'
 import SocialSidebar from '../components/SocialSidebar'
 
 // Import des images
-import livraisonImg from '../assets/images/livraison.png'
-import proImg from '../assets/images/professionnels.jpg'
+import livraisonImg from '../assets/images/livraison.jpg'
+import proImg from '../assets/images/plaque-gaz.jpg'
 import installImg from '../assets/images/professionnels.jpg'
 import distributeurImg from '../assets/images/distributeur.jpg'
 import heroImg from '../assets/images/hero2.jpg'

@@ -16,7 +16,7 @@ const languages = [
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isPointsDeVenteHovered, setIsPointsDeVenteHovered] = useState(false)
+  // La gestion de isPointsDeVenteHovered n'est plus nécessaire pour la logique de redirection directe
   const [selectedLang, setSelectedLang] = useState('fr')
   const location = useLocation()
 
@@ -37,6 +37,7 @@ const Header = () => {
         <div className='flex justify-between items-center mb-4 w-full'>
           {/* Liens Desktop (avec icônes) */}
           <div className='hidden md:flex items-center space-x-8'>
+            {/* Contact (déjà NavLink) */}
             <NavLink
               to='/contact'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
@@ -59,8 +60,9 @@ const Header = () => {
               Contact
             </NavLink>
 
-            <a
-              href='#'
+            {/* FAQ - Devient NavLink */}
+            <NavLink
+              to='/faq'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
             >
               {/* faq / globe icon */}
@@ -79,8 +81,9 @@ const Header = () => {
                 />
               </svg>
               FAQ
-            </a>
+            </NavLink>
 
+            {/* Mon Compte (déjà NavLink) */}
             <NavLink
               to='/mon-compte'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
@@ -103,8 +106,9 @@ const Header = () => {
               Mon Compte
             </NavLink>
 
+            {/* Nos Agences - Devient NavLink */}
             <NavLink
-              to='/points-de-vente'
+              to='/agences'
               className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
             >
               {/* map-pin icon */}
@@ -315,11 +319,14 @@ const Header = () => {
                 </span>
               </div>
             </nav>
-            <button className='bg-red-600 text-white px-6 py-3 rounded-full flex items-center shadow-lg hover:bg-red-700 transition duration-300'>
-              {/* bolt icon */}
+            <NavLink
+              to='/review'
+              onClick={toggleMenu}
+              className='bg-red-600 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center hover:bg-red-700 transition-colors'
+            >
               <svg
                 xmlns='http://www.w3.org/2000/svg'
-                className='h-5 w-5 mr-2'
+                className='h-6 w-6 mr-5'
                 fill='none'
                 viewBox='0 0 24 24'
                 stroke='currentColor'
@@ -328,11 +335,11 @@ const Header = () => {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth={2}
-                  d='M13 10V3L4 14h7v7l9-11h-7z'
+                  d='M15.232 2.232a6.527 6.527 0 00-8.082 0 6.527 6.527 0 00-2.484 8.573 6.527 6.527 0 008.573 2.484l2.5-1.5a1 1 0 011.3 1.3l-1.5 2.5a6.527 6.527 0 008.573 2.484 6.527 6.527 0 002.484-8.573l-1.5-2.5a1 1 0 01-1.3-1.3l2.5-1.5a6.527 6.527 0 00-2.484-8.573zM12 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'
                 />
               </svg>
-              Simuler mon coût
-            </button>
+              Votre avis
+            </NavLink>
           </div>
         </div>
 
@@ -477,8 +484,8 @@ const Header = () => {
                   Contactez Nous
                 </NavLink>
 
-                <a
-                  href='#'
+                <NavLink
+                  to='/faq'
                   className='text-2xl font-bold hover:text-red-600 flex items-center'
                   onClick={toggleMenu}
                 >
@@ -497,7 +504,7 @@ const Header = () => {
                     />
                   </svg>
                   FAQ
-                </a>
+                </NavLink>
 
                 <NavLink
                   to='/blog'
@@ -546,87 +553,10 @@ const Header = () => {
                   Mon Compte
                 </NavLink>
 
-                <div className='relative w-full'>
-                  <a
-                    href='#'
-                    className='flex items-center text-2xl font-bold text-gray-800 hover:text-red-600'
-                    onClick={() =>
-                      setIsPointsDeVenteHovered(!isPointsDeVenteHovered)
-                    }
-                  >
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      className='h-6 w-6 mr-2'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      stroke='currentColor'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                      />
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                      />
-                    </svg>
-                    Nos Points De Vente
-                  </a>
-
-                  {isPointsDeVenteHovered && (
-                    <div className='pl-4 mt-2 flex flex-col space-y-2'>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Magsi
-                      </a>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Ngoa Ekele
-                      </a>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Dibamba
-                      </a>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Bafoussam
-                      </a>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Dschang
-                      </a>
-                      <a
-                        href='#'
-                        className='text-lg text-gray-700 hover:text-red-600'
-                        onClick={toggleMenu}
-                      >
-                        Bertoua
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  className='bg-red-600 text-white px-6 py-3 mt-4 rounded-full flex items-center justify-center shadow-lg hover:bg-red-700'
+                {/* Ici, on redirige directement vers /agences au lieu d'un sous-menu */}
+                <NavLink
+                  to='/agences'
+                  className='text-2xl font-bold hover:text-red-600 flex items-center'
                   onClick={toggleMenu}
                 >
                   <svg
@@ -640,11 +570,17 @@ const Header = () => {
                       strokeLinecap='round'
                       strokeLinejoin='round'
                       strokeWidth={2}
-                      d='M13 10V3L4 14h7v7l9-11h-7z'
+                      d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
+                    />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
                     />
                   </svg>
-                  Simuler mon coût
-                </button>
+                  Nos Agences
+                </NavLink>
               </div>
             </div>
           </div>

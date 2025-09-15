@@ -6,6 +6,7 @@ import { Truck, ShieldCheck, Clock } from 'lucide-react'
 import heroImage1 from '../assets/images/hero1.jpg'
 import heroImage2 from '../assets/images/hero2.jpg'
 import heroImage3 from '../assets/images/hero3.jpg'
+import { NavLink } from 'react-router-dom'
 
 const heroImages = [heroImage1, heroImage2, heroImage3]
 
@@ -89,16 +90,20 @@ const HeroSection = () => {
           </motion.div>
 
           <motion.div className='flex justify-center'>
-            <motion.button
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1, ease: 'easeOut', delay: 1.5 }}
-              whileHover={{ scale: 1.1, rotate: [-1, 1, 0] }}
-              whileTap={{ scale: 0.95 }}
-              className='bg-white text-red-600 px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-gray-100 transition duration-300'
-            >
-              Découvrir nos offres
-            </motion.button>
+            <NavLink to='/products'>
+              <motion.button
+                initial={{ y: 60, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 1, ease: 'easeOut', delay: 1.5 }}
+                whileHover={{ scale: 1.1, rotate: [-1, 1, 0] }}
+                whileTap={{ scale: 0.95 }}
+                className='bg-white text-red-600 px-8 py-4 rounded-full text-lg font-bold shadow-lg 
+                 transition-colors duration-500 ease-in-out 
+                 hover:bg-slate-600 hover:text-white'
+              >
+                Découvrir nos offres
+              </motion.button>
+            </NavLink>
           </motion.div>
         </div>
       </div>

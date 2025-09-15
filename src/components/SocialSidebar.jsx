@@ -13,7 +13,7 @@ const SocialSidebar = () => {
     <div className='fixed right-4 top-1/3 flex flex-col space-y-4 z-50'>
       {/* Facebook */}
       <a
-        href='https://facebook.com'
+        href='https://web.facebook.com/profile.php?id=100083413507172'
         target='_blank'
         rel='noopener noreferrer'
         className='bg-white p-3 rounded-full shadow-md hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center'
