@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Truck, ShieldCheck, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next' // ✅ Ajout : Import du hook de traduction
 
 import heroImage1 from '../assets/images/hero1.jpg'
 import heroImage2 from '../assets/images/hero2.jpg'
@@ -11,6 +12,7 @@ import { NavLink } from 'react-router-dom'
 const heroImages = [heroImage1, heroImage2, heroImage3]
 
 const HeroSection = () => {
+  const { t } = useTranslation() // ✅ Ajout : Initialisation du hook
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   useEffect(() => {
@@ -48,7 +50,7 @@ const HeroSection = () => {
             transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
             className='text-3xl sm:text-4xl lg:text-5xl font-semibold italic text-white text-center'
           >
-            Bouteilles Toujours Pleines
+            {t('Bouteilles Toujours Pleines')}
           </motion.h2>
 
           <motion.p
@@ -57,10 +59,9 @@ const HeroSection = () => {
             transition={{ duration: 1, ease: 'easeOut', delay: 0.6 }}
             className='text-lg sm:text-xl leading-relaxed text-gray-100 text-center max-w-2xl mx-auto'
           >
-            Chez PLEINGAZ, nous croyons que l'accès à une énergie de qualité ne
-            devrait jamais être un souci. C'est pourquoi nous vous garantissons
-            une livraison rapide et des accessoires certifiés, pour votre
-            sécurité et votre tranquillité d’esprit.
+            {t(
+              "Chez PLEINGAZ, nous croyons que l'accès à une énergie de qualité ne devrait jamais être un souci. C'est pourquoi nous vous garantissons une livraison rapide et des accessoires certifiés, pour votre sécurité et votre tranquillité d’esprit."
+            )}
           </motion.p>
 
           <motion.div
@@ -72,19 +73,19 @@ const HeroSection = () => {
             <div className='flex items-center space-x-2'>
               <Truck className='h-8 w-8 text-white' />
               <span className='text-md sm:text-lg font-semibold'>
-                Livraison Express
+                {t('Livraison Express')}
               </span>
             </div>
             <div className='flex items-center space-x-2'>
               <ShieldCheck className='h-8 w-8 text-white' />
               <span className='text-md sm:text-lg font-semibold'>
-                Qualité Certifiée
+                {t('Qualité Certifiée')}
               </span>
             </div>
             <div className='flex items-center space-x-2'>
               <Clock className='h-8 w-8 text-white' />
               <span className='text-md sm:text-lg font-semibold'>
-                Service 24h
+                {t('Service 24h')}
               </span>
             </div>
           </motion.div>
@@ -101,7 +102,7 @@ const HeroSection = () => {
                  transition-colors duration-500 ease-in-out 
                  hover:bg-slate-600 hover:text-white'
               >
-                Découvrir nos offres
+                {t('Découvrir nos offres')}
               </motion.button>
             </NavLink>
           </motion.div>
@@ -114,7 +115,7 @@ const HeroSection = () => {
           <img
             key={index}
             src={image}
-            alt="Famille utilisant l'énergie PLEINGAZ"
+            alt={t("Famille utilisant l'énergie PLEINGAZ")}
             className={`
               absolute top-0 left-0 w-full h-full object-cover 
               transition-all duration-[2000ms] ease-in-out

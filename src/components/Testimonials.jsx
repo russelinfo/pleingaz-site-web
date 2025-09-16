@@ -1,6 +1,7 @@
 // src/components/Testimonials.jsx
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next' // ✅ Ajout : Import du hook de traduction
 import avatar2 from '../assets/images/boy1.jpg'
 import avatar1 from '../assets/images/go.png'
 import avatar3 from '../assets/images/mus.webp'
@@ -44,17 +45,20 @@ const renderStars = (rating) => {
 }
 
 const Testimonials = () => {
+  const { t } = useTranslation() // ✅ Ajout : Initialisation du hook
+
   return (
     <section className='bg-white py-20 relative'>
       <div className='container mx-auto px-4'>
         {/* Titre de la section */}
         <div className='text-center mb-16'>
           <h2 className='text-4xl font-extrabold text-gray-800 mb-4'>
-            Ce que nos clients disent de nous
+            {t('Ce que nos clients disent de nous')}
           </h2>
           <p className='text-gray-600 max-w-2xl mx-auto'>
-            La satisfaction de nos clients est notre plus grande fierté. Voici
-            leurs avis sincères sur nos services et nos produits.
+            {t(
+              'La satisfaction de nos clients est notre plus grande fierté. Voici leurs avis sincères sur nos services et nos produits.'
+            )}
           </p>
         </div>
 
@@ -74,13 +78,13 @@ const Testimonials = () => {
                   {renderStars(testimonial.rating)}
                 </div>
                 <p className='text-gray-700 text-lg mb-6 leading-relaxed italic'>
-                  "{testimonial.quote}"
+                  "{t(testimonial.quote)}"
                 </p>
               </div>
               <div className='flex items-center'>
                 <img
                   src={testimonial.avatar}
-                  alt={`Avatar de ${testimonial.name}`}
+                  alt={t(`Avatar de ${testimonial.name}`)}
                   className='w-14 h-14 rounded-full mr-4 object-cover'
                 />
                 <div>

@@ -1,13 +1,14 @@
 // src/pages/About.jsx
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Heart, Users, Leaf, TrendingUp } from 'lucide-react'
-import aboutVideo from '../assets/videos/present.mp4' // Assurez-vous que le chemin de la vidéo est correct
+import aboutVideo from '../assets/videos/present.mp4'
 
 // Import des composants déjà créés
-import Header from '../components/Header' // Tu devras créer ce composant
-import SocialSidebar from '../components/SocialSidebar' // La barre latérale sociale que nous avons créée
-import Footer from '../components/Footer' // Le footer que nous avons créé
+import Header from '../components/Header'
+import SocialSidebar from '../components/SocialSidebar'
+import Footer from '../components/Footer'
 
 // Les données restent les mêmes
 const pillars = [
@@ -42,11 +43,11 @@ const programs = [
 ]
 
 const About = () => {
+  const { t } = useTranslation()
+
   return (
     <>
-     
-      {/* Tu dois ajouter ton composant Header ici */}
-      
+  
       <SocialSidebar />
       <main className='py-20'>
         <section className='relative bg-gradient-to-b from-[#f3f4f6] via-[#e5e7eb] to-[#f3f4f6] overflow-hidden'>
@@ -55,7 +56,7 @@ const About = () => {
             <div className='flex items-center justify-start gap-4 mb-16'>
               <span className='h-[3px] w-96 bg-red-600 rounded-full'></span>
               <h2 className='text-3xl font-bold text-gray-800'>
-                À propos de PLEINGAZ
+                {t('À propos de PLEINGAZ')}
               </h2>
             </div>
 
@@ -71,36 +72,29 @@ const About = () => {
               >
                 <h3 className='text-2xl font-semibold text-gray-800 mb-6'>
                   PLEINGAZ,{' '}
-                  <span className='text-red-600'>Partenaire de confiance</span>
+                  <span className='text-red-600'>
+                    {t('Partenaire de confiance')}
+                  </span>
                 </h3>
                 <p className='text-gray-700 mb-4'>
-                  PLEINGAZ est une marque commerciale camerounaise de gaz
-                  domestique, distribuée par <b>INFOTECH S.A.</b> à travers son
-                  département <b>INFOTECHGAZ</b>. Présente sur le marché depuis
-                  décembre 2015, PLEINGAZ s’est imposée comme un acteur de
-                  référence dans le secteur de l’énergie au Cameroun.
+                  {t(
+                    'PLEINGAZ est une marque commerciale camerounaise de gaz domestique, distribuée par INFOTECH S.A. à travers son département INFOTECHGAZ. Présente sur le marché depuis décembre 2015, PLEINGAZ s’est imposée comme un acteur de référence dans le secteur de l’énergie au Cameroun.'
+                  )}
                 </p>
                 <p className='text-gray-700 mb-4'>
-                  Nos produits sont disponibles sur tout le territoire national
-                  grâce à un réseau de distribution solide et fiable. Notre
-                  mission est de rendre le gaz domestique accessible au plus
-                  grand nombre, en garantissant <b>sécurité</b>,{' '}
-                  <b>fiabilité</b> et <b>disponibilité permanente</b>.
+                  {t(
+                    'Nos produits sont disponibles sur tout le territoire national grâce à un réseau de distribution solide et fiable. Notre mission est de rendre le gaz domestique accessible au plus grand nombre, en garantissant sécurité, fiabilité et disponibilité permanente.'
+                  )}
                 </p>
                 <p className='text-gray-700 mb-8'>
-                  En plus du gaz, PLEINGAZ propose une gamme complète d’
-                  <b>accessoires</b> : plaques à gaz, détendeurs, tuyaux,
-                  brûleurs, et autres équipements essentiels pour une
-                  utilisation simple et sécurisée.
+                  {t(
+                    'En plus du gaz, PLEINGAZ propose une gamme complète d’accessoires : plaques à gaz, détendeurs, tuyaux, brûleurs, et autres équipements essentiels pour une utilisation simple et sécurisée.'
+                  )}
                 </p>
                 <p className='text-gray-700 mb-8'>
-                  Le produit a reçu un accueil positif au Cameroun, les ventes
-                  au lancement ont largement dépassé les prévisions. Depuis
-                  l’introduction de PLEINGAZ, les ménages insatisfaits par
-                  d’autres marques ont été satisfaits et continuent à faire
-                  confiance à notre marque. Cela a été possible en raison de
-                  facteurs tels que la fiabilité, la disponibilité et la
-                  sécurité de nos bouteilles.
+                  {t(
+                    'Le produit a reçu un accueil positif au Cameroun, les ventes au lancement ont largement dépassé les prévisions. Depuis l’introduction de PLEINGAZ, les ménages insatisfaits par d’autres marques ont été satisfaits et continuent à faire confiance à notre marque. Cela a été possible en raison de facteurs tels que la fiabilité, la disponibilité et la sécurité de nos bouteilles.'
+                  )}
                 </p>
               </motion.div>
 
@@ -136,7 +130,7 @@ const About = () => {
               <div className='flex items-center justify-center gap-3 mb-8'>
                 <span className='h-[3px] w-12 bg-red-600 rounded-full'></span>
                 <h3 className='text-2xl font-semibold text-gray-800'>
-                  Notre engagement
+                  {t('Notre engagement')}
                 </h3>
                 <span className='h-[3px] w-12 bg-red-600 rounded-full'></span>
               </div>
@@ -148,8 +142,10 @@ const About = () => {
                     whileHover={{ scale: 1.05, y: -5 }}
                   >
                     <div className='flex justify-center w-full'>{p.icon}</div>
-                    <h4 className='font-semibold text-gray-800'>{p.title}</h4>
-                    <p className='text-sm text-gray-600'>{p.desc}</p>
+                    <h4 className='font-semibold text-gray-800'>
+                      {t(p.title)}
+                    </h4>
+                    <p className='text-sm text-gray-600'>{t(p.desc)}</p>
                   </motion.div>
                 ))}
               </div>
@@ -167,7 +163,7 @@ const About = () => {
               <div className='flex items-center justify-center gap-3 mb-8'>
                 <span className='h-[3px] w-12 bg-red-600 rounded-full'></span>
                 <h3 className='text-2xl font-semibold text-gray-800'>
-                  Nos initiatives sociales
+                  {t('Nos initiatives sociales')}
                 </h3>
                 <span className='h-[3px] w-12 bg-red-600 rounded-full'></span>
               </div>
@@ -177,7 +173,7 @@ const About = () => {
                     key={i}
                     className='bg-white rounded-lg shadow p-4 hover:shadow-md transition'
                   >
-                    ✅ {prog}
+                    ✅ {t(prog)}
                   </li>
                 ))}
               </ul>
@@ -187,7 +183,7 @@ const About = () => {
       </main>
 
       {/* Le composant Footer qui sera affiché en bas de la page */}
-      {/* <Footer /> */}
+      
     </>
   )
 }

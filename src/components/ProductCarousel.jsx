@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom' // Importez useNavigate
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next' // ✅ Ajout : Import du hook de traduction
 
 // Import images
 import btn6 from '../assets/images/btn6.png'
@@ -17,18 +18,18 @@ import bruleur from '../assets/images/bruleur.png'
 
 const products = [
   {
-    id: 'prod01', // ✅ Ajout de l'ID unique
+    id: 'prod01',
     name: 'Bouteille de gaz 6 kg',
     image: btn6,
     description:
-      'Bouteille en acier robuste, livrée pleine de 6 kg de GPL. Idéale pour petites familles et usages occasionnels. ',
+      'Bouteille en acier robuste, livrée pleine de 6 kg de GPL. Idéale pour petites familles et usages occasionnels.',
     fullPrice: '16 120 Fcfa',
     emptyPrice: '3 120 Fcfa',
     rating: 4.5,
     isGasBottle: true,
   },
   {
-    id: 'prod02', // ✅ Ajout de l'ID unique
+    id: 'prod02',
     name: 'Bouteille de gaz 12,5 kg',
     image: btn125,
     description:
@@ -39,7 +40,7 @@ const products = [
     isGasBottle: true,
   },
   {
-    id: 'prod03', // ✅ Ajout de l'ID unique
+    id: 'prod03',
     name: 'Bouteille de gaz 50 kg',
     image: btn50,
     description:
@@ -50,7 +51,7 @@ const products = [
     isGasBottle: true,
   },
   {
-    id: 'prod04', // ✅ Ajout de l'ID unique
+    id: 'prod04',
     name: 'Plaque à gaz en verre',
     image: vitrer,
     description:
@@ -60,7 +61,7 @@ const products = [
     isGasBottle: false,
   },
   {
-    id: 'prod05', // ✅ Ajout de l'ID unique
+    id: 'prod05',
     name: 'Plaque à gaz en acier',
     image: classic,
     description:
@@ -70,7 +71,7 @@ const products = [
     isGasBottle: false,
   },
   {
-    id: 'prod06', // ✅ Ajout de l'ID unique
+    id: 'prod06',
     name: 'Détendeur pour bouteille 12,5 kg',
     image: detenteur,
     description:
@@ -80,7 +81,7 @@ const products = [
     isGasBottle: false,
   },
   {
-    id: 'prod07', // ✅ Ajout de l'ID unique
+    id: 'prod07',
     name: 'Détendeur pour bouteille 6 kg',
     image: detenteur2,
     description:
@@ -90,7 +91,7 @@ const products = [
     isGasBottle: false,
   },
   {
-    id: 'prod08', // ✅ Ajout de l'ID unique
+    id: 'prod08',
     name: 'Tuyau de gaz',
     image: tuyo,
     taille: '1.5 m',
@@ -101,7 +102,7 @@ const products = [
     isGasBottle: false,
   },
   {
-    id: 'prod09', // ✅ Ajout de l'ID unique
+    id: 'prod09',
     name: 'Brûleur vissable pour bouteille 6 kg',
     image: bruleur,
     description:
@@ -113,8 +114,9 @@ const products = [
 ]
 
 const ProductCarousel = () => {
+  const { t } = useTranslation() // ✅ Ajout : Initialisation du hook
   const [currentIndex, setCurrentIndex] = useState(0)
-  const navigate = useNavigate() // Initialisez useNavigate
+  const navigate = useNavigate()
 
   // Autoplay toutes les 6s
   useEffect(() => {
@@ -143,10 +145,7 @@ const ProductCarousel = () => {
     ))
   }
 
-  // ✅ Nouvelle fonction pour gérer le clic sur "Voir plus"
   const handleViewMore = (productId) => {
-    // Redirige vers la page des produits en ajoutant l'ID dans l'URL
-    // Assure-toi que ton routeur dans App.jsx est configuré pour gérer '/products/:id'
     navigate(`/products/${productId}`)
   }
 
@@ -157,7 +156,7 @@ const ProductCarousel = () => {
         <div className='flex items-center mb-6'>
           <div className='w-96 h-1 bg-red-600 mr-4' />
           <h2 className='text-3xl font-extrabold text-gray-800 whitespace-nowrap'>
-            Nos produits, votre énergie
+            {t('Nos produits, votre énergie')}
           </h2>
         </div>
 
@@ -170,7 +169,9 @@ const ProductCarousel = () => {
           viewport={{ once: true }}
         >
           <p className='text-gray-600 max-w-3xl text-lg leading-relaxed'>
-            Explorez notre gamme de solutions énergétiques de haute qualité.
+            {t(
+              'Explorez notre gamme de solutions énergétiques de haute qualité.'
+            )}
           </p>
         </motion.div>
 
@@ -216,14 +217,14 @@ const ProductCarousel = () => {
                     whileHover={{
                       scale: 1.05,
                       y: -10,
-                      boxShadow: '0px 8px 30px rgba(0, 0, 0, 0.25)', // Ombre forte
+                      boxShadow: '0px 8px 30px rgba(0, 0, 0, 0.25)',
                     }}
                     transition={{ duration: 0.3 }}
                     className='bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center p-6 border border-gray-200'
                   >
                     <motion.img
                       src={product.image}
-                      alt={product.name}
+                      alt={t(product.name)}
                       className='h-48 object-contain mb-4'
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -233,10 +234,10 @@ const ProductCarousel = () => {
                     {/* Zone produit */}
                     <div className='bg-red-600 w-full rounded-b-2xl p-4 -mx-6 text-center shadow-md'>
                       <h3 className='text-xl font-semibold text-white mb-2'>
-                        {product.name}
+                        {t(product.name)}
                       </h3>
                       <p className='text-sm text-gray-100 mb-4'>
-                        {product.description}
+                        {t(product.description)}
                       </p>
 
                       <div className='flex items-center justify-center mb-2'>
@@ -249,13 +250,15 @@ const ProductCarousel = () => {
                       {product.isGasBottle ? (
                         <div className='mb-4 text-white'>
                           <span className='text-sm font-bold'>
-                            Bouteille+GPL :{' '}
+                            {t('Bouteille+GPL : ')}
                           </span>
                           <span className='text-lg font-bold'>
                             {product.fullPrice}
                           </span>
                           <br />
-                          <span className='text-sm font-bold'>Gaz : </span>
+                          <span className='text-sm font-bold'>
+                            {t('Gaz : ')}
+                          </span>
                           <span className='text-md font-bold'>
                             {product.emptyPrice}
                           </span>
@@ -269,10 +272,10 @@ const ProductCarousel = () => {
 
                     {/* ✅ Bouton "Voir plus" avec redirection */}
                     <button
-                      onClick={() => handleViewMore(product.id)} // Appel de la nouvelle fonction
+                      onClick={() => handleViewMore(product.id)}
                       className='bg-black text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 mt-4'
                     >
-                      Voir plus
+                      {t('Voir plus')}
                     </button>
                   </motion.div>
                 </motion.div>

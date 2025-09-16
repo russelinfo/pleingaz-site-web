@@ -15,20 +15,20 @@ import {
   FaCommentDots,
   FaSearch,
 } from 'react-icons/fa'
+import { useTranslation } from 'react-i18next' // ✅ Ajout : Import du hook de traduction
 import logo from '../assets/images/logo.png'
 
 // Drapeaux
 import frFlag from '../assets/images/fr.jpg'
 import enFlag from '../assets/images/en.jpg'
-import cnFlag from '../assets/images/cn.jpg'
 
 const languages = [
   { code: 'fr', label: 'Français', flag: frFlag },
   { code: 'en', label: 'English', flag: enFlag },
-  { code: 'cn', label: '中文', flag: cnFlag },
 ]
 
 const Header = () => {
+  const { t, i18n } = useTranslation() // ✅ Ajout : Initialisation du hook
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [selectedLang, setSelectedLang] = useState('fr')
   const location = useLocation()
@@ -43,6 +43,13 @@ const Header = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
+  // ✅ Ajout : Fonction pour gérer le changement de langue
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value
+    setSelectedLang(newLang)
+    i18n.changeLanguage(newLang)
+  }
+
   return (
     <header className='bg-white shadow-md sticky top-0 z-50'>
       <div className='container mx-auto px-4 md:px-12'>
@@ -54,22 +61,22 @@ const Header = () => {
               to='/contact'
               className='flex items-center hover:text-red-600'
             >
-              <FaPhoneAlt className='mr-1' /> Contact
+              <FaPhoneAlt className='mr-1' /> {t('Contact')}
             </NavLink>
             <NavLink to='/faq' className='flex items-center hover:text-red-600'>
-              <FaQuestionCircle className='mr-1' /> FAQ
+              <FaQuestionCircle className='mr-1' /> {t('FAQ')}
             </NavLink>
             <NavLink
               to='/mon-compte'
               className='flex items-center hover:text-red-600'
             >
-              <FaUserCircle className='mr-1' /> Mon compte
+              <FaUserCircle className='mr-1' /> {t('Mon compte')}
             </NavLink>
             <NavLink
               to='/agences'
               className='flex items-center hover:text-red-600'
             >
-              <FaMapMarkerAlt className='mr-1' /> Nos agences
+              <FaMapMarkerAlt className='mr-1' /> {t('Nos agences')}
             </NavLink>
           </div>
 
@@ -78,7 +85,7 @@ const Header = () => {
             <div className='relative'>
               <input
                 type='text'
-                placeholder='Rechercher...'
+                placeholder={t('Rechercher...')}
                 className='bg-gray-100 rounded-full py-2 pl-9 pr-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-600 border border-gray-200'
               />
               <FaSearch className='h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />
@@ -86,7 +93,7 @@ const Header = () => {
             <div className='relative'>
               <select
                 value={selectedLang}
-                onChange={(e) => setSelectedLang(e.target.value)}
+                onChange={handleLanguageChange} // ✅ Modification : Utilisation de la nouvelle fonction
                 className='appearance-none bg-gray-100 border border-gray-200 text-gray-800 py-2 pl-8 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer text-sm'
               >
                 {languages.map((lang) => (
@@ -109,7 +116,7 @@ const Header = () => {
             <div className='relative'>
               <select
                 value={selectedLang}
-                onChange={(e) => setSelectedLang(e.target.value)}
+                onChange={handleLanguageChange} // ✅ Modification : Utilisation de la nouvelle fonction
                 className='bg-gray-100 border border-gray-200 text-gray-800 py-1.5 pl-7 pr-3 rounded-full text-sm'
               >
                 {languages.map((lang) => (
@@ -161,7 +168,7 @@ const Header = () => {
           <div className='relative w-full md:hidden mb-4 px-2'>
             <input
               type='text'
-              placeholder='Rechercher...'
+              placeholder={t('Rechercher...')}
               className='bg-gray-100 rounded-full py-2 pl-9 pr-4 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-600 border border-gray-200'
             />
             <FaSearch className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />
@@ -170,25 +177,25 @@ const Header = () => {
           {/* Navigation Desktop */}
           <nav className='hidden md:flex items-center space-x-8 text-lg font-medium'>
             <NavLink to='/' className={getLinkClass('/')}>
-              <FaHome /> <span>Accueil</span>
+              <FaHome /> <span>{t('Accueil')}</span>
             </NavLink>
             <NavLink to='/about' className={getLinkClass('/about')}>
-              <FaInfoCircle /> <span>A propos</span>
+              <FaInfoCircle /> <span>{t('A propos')}</span>
             </NavLink>
             <NavLink to='/products' className={getLinkClass('/products')}>
-              <FaBoxOpen /> <span>Produits</span>
+              <FaBoxOpen /> <span>{t('Produits')}</span>
             </NavLink>
             <NavLink to='/services' className={getLinkClass('/services')}>
-              <FaServicestack /> <span>Services</span>
+              <FaServicestack /> <span>{t('Services')}</span>
             </NavLink>
             <NavLink to='/contact' className={getLinkClass('/contact')}>
-              <FaPhoneAlt /> <span>Contact</span>
+              <FaPhoneAlt /> <span>{t('Contact')}</span>
             </NavLink>
             <NavLink to='/faq' className={getLinkClass('/faq')}>
-              <FaQuestionCircle /> <span>FAQ</span>
+              <FaQuestionCircle /> <span>{t('FAQ')}</span>
             </NavLink>
             <NavLink to='/blog' className={getLinkClass('/blog')}>
-              <FaBlog /> <span>Blog</span>
+              <FaBlog /> <span>{t('Blog')}</span>
             </NavLink>
           </nav>
 
@@ -197,7 +204,7 @@ const Header = () => {
             to='/review'
             className='hidden md:flex bg-red-600 text-white font-bold py-3 px-7 rounded-full shadow-md items-center hover:bg-red-700 transition'
           >
-            <FaCommentDots className='mr-2' /> Votre avis
+            <FaCommentDots className='mr-2' /> {t('Votre avis')}
           </NavLink>
         </div>
       </div>
@@ -222,63 +229,63 @@ const Header = () => {
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaHome className='mr-2' /> Accueil
+                <FaHome className='mr-2' /> {t('Accueil')}
               </NavLink>
               <NavLink
                 to='/about'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaInfoCircle className='mr-2' /> A propos
+                <FaInfoCircle className='mr-2' /> {t('A propos')}
               </NavLink>
               <NavLink
                 to='/products'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaBoxOpen className='mr-2' /> Produits
+                <FaBoxOpen className='mr-2' /> {t('Produits')}
               </NavLink>
               <NavLink
                 to='/services'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaServicestack className='mr-2' /> Services
+                <FaServicestack className='mr-2' /> {t('Services')}
               </NavLink>
               <NavLink
                 to='/contact'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaPhoneAlt className='mr-2' /> Contact
+                <FaPhoneAlt className='mr-2' /> {t('Contact')}
               </NavLink>
               <NavLink
                 to='/faq'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaQuestionCircle className='mr-2' /> FAQ
+                <FaQuestionCircle className='mr-2' /> {t('FAQ')}
               </NavLink>
               <NavLink
                 to='/blog'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaBlog className='mr-2' /> Blog
+                <FaBlog className='mr-2' /> {t('Blog')}
               </NavLink>
               <NavLink
                 to='/mon-compte'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaUserCircle className='mr-2' /> Mon compte
+                <FaUserCircle className='mr-2' /> {t('Mon compte')}
               </NavLink>
               <NavLink
                 to='/agences'
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaMapMarkerAlt className='mr-2' /> Nos agences
+                <FaMapMarkerAlt className='mr-2' /> {t('Nos agences')}
               </NavLink>
             </nav>
 
@@ -288,7 +295,7 @@ const Header = () => {
                 onClick={toggleMenu}
                 className='block w-full text-center bg-red-600 text-white font-bold py-3 rounded-full shadow-md flex items-center justify-center hover:bg-red-700 transition'
               >
-                <FaCommentDots className='mr-2' /> Laisser votre avis
+                <FaCommentDots className='mr-2' /> {t('Laisser votre avis')}
               </NavLink>
             </div>
           </motion.div>
