@@ -1,13 +1,27 @@
 // src/components/Header.jsx
 import React, { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import {
+  FaHome,
+  FaInfoCircle,
+  FaBoxOpen,
+  FaServicestack,
+  FaPhoneAlt,
+  FaQuestionCircle,
+  FaBlog,
+  FaUserCircle,
+  FaMapMarkerAlt,
+  FaCommentDots,
+  FaSearch,
+} from 'react-icons/fa'
 import logo from '../assets/images/logo.png'
+
 // Drapeaux
 import frFlag from '../assets/images/fr.jpg'
 import enFlag from '../assets/images/en.jpg'
 import cnFlag from '../assets/images/cn.jpg'
 
-// Tableau des langues
 const languages = [
   { code: 'fr', label: 'Français', flag: frFlag },
   { code: 'en', label: 'English', flag: enFlag },
@@ -16,14 +30,13 @@ const languages = [
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // La gestion de isPointsDeVenteHovered n'est plus nécessaire pour la logique de redirection directe
   const [selectedLang, setSelectedLang] = useState('fr')
   const location = useLocation()
 
   const getLinkClass = (path) => {
     return location.pathname === path
-      ? 'font-semibold text-gray-800 border-b-2 border-red-600 pb-2 transition duration-300'
-      : 'font-semibold text-gray-800 hover:text-red-600 hover:border-b-2 hover:border-red-600 pb-2 transition duration-300'
+      ? 'text-red-600 font-semibold flex items-center space-x-2 border-b-2 border-red-600 pb-1'
+      : 'text-gray-800 hover:text-red-600 flex items-center space-x-2 hover:border-b-2 hover:border-red-600 pb-1'
   }
 
   const toggleMenu = () => {
@@ -31,140 +44,50 @@ const Header = () => {
   }
 
   return (
-    <header className='bg-white px-4 md:px-12 py-5 shadow-md sticky top-0 z-50'>
-      <div className='container mx-auto flex flex-wrap justify-between items-center'>
+    <header className='bg-white shadow-md sticky top-0 z-50'>
+      <div className='container mx-auto px-4 md:px-12'>
         {/* --- LIGNE DU HAUT --- */}
-        <div className='flex justify-between items-center mb-4 w-full'>
-          {/* Liens Desktop (avec icônes) */}
-          <div className='hidden md:flex items-center space-x-8'>
-            {/* Contact (déjà NavLink) */}
+        <div className='flex justify-between items-center py-3 md:py-4 border-b border-gray-200'>
+          {/* Liens utilitaires Desktop */}
+          <div className='hidden md:flex items-center space-x-8 text-sm font-medium'>
             <NavLink
               to='/contact'
-              className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
+              className='flex items-center hover:text-red-600'
             >
-              {/* phone icon */}
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-4 w-4 mr-1'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'
-                />
-              </svg>
-              Contact
+              <FaPhoneAlt className='mr-1' /> Contact
             </NavLink>
-
-            {/* FAQ - Devient NavLink */}
-            <NavLink
-              to='/faq'
-              className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
-            >
-              {/* faq / globe icon */}
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-4 w-4 mr-1'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M8.228 9.255a6.527 6.527 0 018.573-2.484l2.5-1.5a1 1 0 011.3 1.3l-1.5 2.5a6.527 6.527 0 01-2.484 8.573 6.527 6.527 0 01-8.573-2.484l-2.5 1.5a1 1 0 01-1.3-1.3l1.5-2.5a6.527 6.527 0 012.484-8.573z'
-                />
-              </svg>
-              FAQ
+            <NavLink to='/faq' className='flex items-center hover:text-red-600'>
+              <FaQuestionCircle className='mr-1' /> FAQ
             </NavLink>
-
-            {/* Mon Compte (déjà NavLink) */}
             <NavLink
               to='/mon-compte'
-              className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
+              className='flex items-center hover:text-red-600'
             >
-              {/* user icon */}
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-5 w-5 mr-1'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                />
-              </svg>
-              Mon Compte
+              <FaUserCircle className='mr-1' /> Mon compte
             </NavLink>
-
-            {/* Nos Agences - Devient NavLink */}
             <NavLink
               to='/agences'
-              className='flex items-center text-gray-700 hover:border-b-2 hover:border-red-600 hover:text-red-600 transition duration-300 pb-2'
+              className='flex items-center hover:text-red-600'
             >
-              {/* map-pin icon */}
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-4 w-4 mr-1'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                />
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                />
-              </svg>
-              Nos Agences
+              <FaMapMarkerAlt className='mr-1' /> Nos agences
             </NavLink>
           </div>
 
           {/* Recherche + Langue Desktop */}
-          <div className='flex items-center ml-auto space-x-4 hidden md:flex'>
+          <div className='hidden md:flex items-center space-x-4'>
             <div className='relative'>
               <input
                 type='text'
-                placeholder='Rechercher sur le site...'
-                className='bg-gray-200 rounded-full py-2 px-4 pl-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300 border border-transparent'
+                placeholder='Rechercher...'
+                className='bg-gray-100 rounded-full py-2 pl-9 pr-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-600 border border-gray-200'
               />
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                />
-              </svg>
+              <FaSearch className='h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />
             </div>
-
             <div className='relative'>
               <select
                 value={selectedLang}
                 onChange={(e) => setSelectedLang(e.target.value)}
-                className='appearance-none bg-gray-200 border border-gray-300 text-gray-800 py-2 pl-10 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer'
+                className='appearance-none bg-gray-100 border border-gray-200 text-gray-800 py-2 pl-8 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer text-sm'
               >
                 {languages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -175,417 +98,202 @@ const Header = () => {
               <img
                 src={languages.find((l) => l.code === selectedLang)?.flag}
                 alt='flag'
-                className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2'
+                className='h-4 w-4 absolute left-2.5 top-1/2 transform -translate-y-1/2'
               />
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M19 9l-7 7-7-7'
-                />
-              </svg>
             </div>
           </div>
 
-          {/* Langue Mobile */}
-          <div className='flex items-center md:hidden mr-2'>
+          {/* Mobile : langue à gauche + hamburger à droite */}
+          <div className='flex items-center md:hidden w-full justify-between'>
+            {/* Langue Mobile */}
             <div className='relative'>
               <select
                 value={selectedLang}
                 onChange={(e) => setSelectedLang(e.target.value)}
-                className='appearance-none bg-gray-200 border border-gray-300 text-gray-800 py-2 pl-10 pr-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 cursor-pointer'
+                className='bg-gray-100 border border-gray-200 text-gray-800 py-1.5 pl-7 pr-3 rounded-full text-sm'
               >
                 {languages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
-                    {lang.label}
+                    {lang.code.toUpperCase()}
                   </option>
                 ))}
               </select>
               <img
                 src={languages.find((l) => l.code === selectedLang)?.flag}
                 alt='flag'
-                className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2'
+                className='h-4 w-4 absolute left-1.5 top-1/2 transform -translate-y-1/2'
               />
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M19 9l-7 7-7-7'
-                />
-              </svg>
             </div>
-          </div>
 
-          {/* Menu Hamburger Mobile */}
-          <div className='md:hidden flex items-center'>
+            {/* Hamburger tout à droite */}
             <button
               onClick={toggleMenu}
-              className='text-gray-800 focus:outline-none ml-4'
-              aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              className='relative w-9 h-9 flex flex-col justify-between items-center group'
             >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-8 w-8'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d={
-                    isMenuOpen
-                      ? 'M6 18L18 6M6 6l12 12'
-                      : 'M4 6h16M4 12h16m-7 6h7'
-                  }
-                />
-              </svg>
+              <motion.span
+                animate={
+                  isMenuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }
+                }
+                className='block w-6 h-[2px] bg-gray-800 rounded group-hover:bg-red-600'
+              />
+              <motion.span
+                animate={isMenuOpen ? { opacity: 0 } : { opacity: 1 }}
+                className='block w-6 h-[2px] bg-gray-800 rounded group-hover:bg-red-600'
+              />
+              <motion.span
+                animate={
+                  isMenuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }
+                }
+                className='block w-6 h-[2px] bg-gray-800 rounded group-hover:bg-red-600'
+              />
             </button>
           </div>
         </div>
 
-        <hr className='my-4 border-gray-200 hidden md:block w-full' />
-
-        {/* --- LIGNE DU BAS (Desktop) --- */}
-        <div className='flex justify-between items-center flex-wrap w-full'>
-          <div className='flex-shrink-0 mb-4 md:mb-0'>
-            <img src={logo} alt='Logo de PLEINGAZ' className='h-14 w-auto' />
+        {/* --- LIGNE DU BAS --- */}
+        <div className='flex flex-col md:flex-row md:justify-between md:items-center py-5'>
+          {/* Logo */}
+          <div className='flex-shrink-0 flex justify-center md:justify-start mb-3 md:mb-0'>
+            <img src={logo} alt='Logo' className='h-16 w-auto' />
           </div>
 
-          {/* Barre recherche Mobile */}
+          {/* Recherche Mobile visible */}
           <div className='relative w-full md:hidden mb-4 px-2'>
             <input
               type='text'
-              placeholder='Rechercher sur le site...'
-              className='bg-gray-200 rounded-full py-2 px-4 pl-10 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300 border border-transparent'
+              placeholder='Rechercher...'
+              className='bg-gray-100 rounded-full py-2 pl-9 pr-4 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-600 border border-gray-200'
             />
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-              />
-            </svg>
+            <FaSearch className='h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />
           </div>
 
           {/* Navigation Desktop */}
-          <div className='hidden md:flex items-center space-x-8'>
-            <nav className='flex items-center space-x-8'>
-              <NavLink to='/' className={getLinkClass('/')}>
-                Accueil
-              </NavLink>
-              <NavLink to='/about' className={getLinkClass('/about')}>
-                A propos de nous
-              </NavLink>
-
-              <NavLink to='/products' className={getLinkClass('/products')}>
-                Nos produits
-              </NavLink>
-
-              <NavLink to='/services' className={getLinkClass('/services')}>
-                Prestation de service
-              </NavLink>
-              <NavLink to='/contact' className={getLinkClass('/contact')}>
-                Contactez Nous
-              </NavLink>
-              <div className='relative flex items-center'>
-                <NavLink to='/blog' className={getLinkClass('/blog')}>
-                  Blog
-                </NavLink>
-                <span className='absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-full bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap'>
-                  Actu!
-                </span>
-              </div>
-            </nav>
-            <NavLink
-              to='/review'
-              onClick={toggleMenu}
-              className='bg-red-600 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center hover:bg-red-700 transition-colors'
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-6 w-6 mr-5'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M15.232 2.232a6.527 6.527 0 00-8.082 0 6.527 6.527 0 00-2.484 8.573 6.527 6.527 0 008.573 2.484l2.5-1.5a1 1 0 011.3 1.3l-1.5 2.5a6.527 6.527 0 008.573 2.484 6.527 6.527 0 002.484-8.573l-1.5-2.5a1 1 0 01-1.3-1.3l2.5-1.5a6.527 6.527 0 00-2.484-8.573zM12 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'
-                />
-              </svg>
-              Votre avis
+          <nav className='hidden md:flex items-center space-x-8 text-lg font-medium'>
+            <NavLink to='/' className={getLinkClass('/')}>
+              <FaHome /> <span>Accueil</span>
             </NavLink>
-          </div>
+            <NavLink to='/about' className={getLinkClass('/about')}>
+              <FaInfoCircle /> <span>A propos</span>
+            </NavLink>
+            <NavLink to='/products' className={getLinkClass('/products')}>
+              <FaBoxOpen /> <span>Produits</span>
+            </NavLink>
+            <NavLink to='/services' className={getLinkClass('/services')}>
+              <FaServicestack /> <span>Services</span>
+            </NavLink>
+            <NavLink to='/contact' className={getLinkClass('/contact')}>
+              <FaPhoneAlt /> <span>Contact</span>
+            </NavLink>
+            <NavLink to='/faq' className={getLinkClass('/faq')}>
+              <FaQuestionCircle /> <span>FAQ</span>
+            </NavLink>
+            <NavLink to='/blog' className={getLinkClass('/blog')}>
+              <FaBlog /> <span>Blog</span>
+            </NavLink>
+          </nav>
+
+          {/* Bouton avis */}
+          <NavLink
+            to='/review'
+            className='hidden md:flex bg-red-600 text-white font-bold py-3 px-7 rounded-full shadow-md items-center hover:bg-red-700 transition'
+          >
+            <FaCommentDots className='mr-2' /> Votre avis
+          </NavLink>
         </div>
-
-        {/* --- Menu Overlay (Mobile) --- */}
-        {isMenuOpen && (
-          <div className='fixed inset-0 z-40 md:hidden'>
-            {/* Overlay sombre */}
-            <div
-              className='absolute inset-0 bg-black bg-opacity-50'
-              onClick={toggleMenu}
-            ></div>
-
-            {/* Menu mobile qui slide */}
-            <div className='absolute top-0 right-0 w-3/4 max-w-sm h-full bg-white p-6 flex flex-col items-start shadow-lg transform transition-transform duration-300 ease-in-out'>
-              <button
-                onClick={toggleMenu}
-                className='self-end text-gray-800 mb-6'
-              >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-8 w-8'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-              <div className='flex flex-col space-y-6 w-full'>
-                <NavLink
-                  to='/'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1H9m2-2v2a1 1 0 001 1h2a1 1 0 001-1v-2m-6 0h6'
-                    />
-                  </svg>
-                  Accueil
-                </NavLink>
-
-                <NavLink
-                  to='/about'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                    />
-                  </svg>
-                  A propos de nous
-                </NavLink>
-
-                <NavLink
-                  to='/products'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M3 7h18M3 12h18M3 17h18'
-                    />
-                  </svg>
-                  Nos produits
-                </NavLink>
-
-                <NavLink
-                  to='/services'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'
-                    />
-                  </svg>
-                  Prestation de service
-                </NavLink>
-
-                <NavLink
-                  to='/contact'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'
-                    />
-                  </svg>
-                  Contactez Nous
-                </NavLink>
-
-                <NavLink
-                  to='/faq'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M8.228 9.255a6.527 6.527 0 018.573-2.484l2.5-1.5a1 1 0 011.3 1.3l-1.5 2.5a6.527 6.527 0 01-2.484 8.573 6.527 6.527 0 01-8.573-2.484l-2.5 1.5a1 1 0 01-1.3-1.3l1.5-2.5a6.527 6.527 0 012.484-8.573z'
-                    />
-                  </svg>
-                  FAQ
-                </NavLink>
-
-                <NavLink
-                  to='/blog'
-                  className='text-2xl font-bold hover:text-red-600 relative flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v14M12 10l-2 2m0 0l2 2m-2-2h6m-2 2l-2-2m2 2l2 2'
-                    />
-                  </svg>
-                  Blog
-                  <span className='ml-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full'>
-                    Actu!
-                  </span>
-                </NavLink>
-
-                <NavLink
-                  to='/mon-compte'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                    />
-                  </svg>
-                  Mon Compte
-                </NavLink>
-
-                {/* Ici, on redirige directement vers /agences au lieu d'un sous-menu */}
-                <NavLink
-                  to='/agences'
-                  className='text-2xl font-bold hover:text-red-600 flex items-center'
-                  onClick={toggleMenu}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6 mr-2'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                    />
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                    />
-                  </svg>
-                  Nos Agences
-                </NavLink>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* --- Menu mobile --- */}
+      {isMenuOpen && (
+        <div className='fixed inset-0 z-40 md:hidden'>
+          <div
+            className='absolute inset-0 bg-black bg-opacity-40'
+            onClick={toggleMenu}
+          ></div>
+
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            transition={{ duration: 0.3 }}
+            className='absolute top-0 right-0 w-3/4 max-w-sm h-full bg-white shadow-xl p-6 flex flex-col'
+          >
+            <nav className='flex flex-col divide-y divide-gray-200 text-lg font-medium text-gray-700'>
+              <NavLink
+                to='/'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaHome className='mr-2' /> Accueil
+              </NavLink>
+              <NavLink
+                to='/about'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaInfoCircle className='mr-2' /> A propos
+              </NavLink>
+              <NavLink
+                to='/products'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaBoxOpen className='mr-2' /> Produits
+              </NavLink>
+              <NavLink
+                to='/services'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaServicestack className='mr-2' /> Services
+              </NavLink>
+              <NavLink
+                to='/contact'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaPhoneAlt className='mr-2' /> Contact
+              </NavLink>
+              <NavLink
+                to='/faq'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaQuestionCircle className='mr-2' /> FAQ
+              </NavLink>
+              <NavLink
+                to='/blog'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaBlog className='mr-2' /> Blog
+              </NavLink>
+              <NavLink
+                to='/mon-compte'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaUserCircle className='mr-2' /> Mon compte
+              </NavLink>
+              <NavLink
+                to='/agences'
+                onClick={toggleMenu}
+                className='py-4 flex items-center hover:text-red-600'
+              >
+                <FaMapMarkerAlt className='mr-2' /> Nos agences
+              </NavLink>
+            </nav>
+
+            <div className='mt-auto pt-6'>
+              <NavLink
+                to='/review'
+                onClick={toggleMenu}
+                className='block w-full text-center bg-red-600 text-white font-bold py-3 rounded-full shadow-md flex items-center justify-center hover:bg-red-700 transition'
+              >
+                <FaCommentDots className='mr-2' /> Laisser votre avis
+              </NavLink>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </header>
   )
 }

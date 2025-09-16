@@ -21,7 +21,7 @@ const HeroSection = () => {
   }, [])
 
   return (
-    <section className='relative w-full min-h-[550px] flex items-center overflow-hidden'>
+    <section className='relative w-full min-h-[595px] flex items-center overflow-hidden'>
       {/* ✅ Dégradé animé */}
       <div className='absolute inset-0 animate-gradient bg-[linear-gradient(270deg,#7f1d1d,#dc2626,#f87171,#ef4444,#991b1b)] bg-[length:400%_400%]' />
 
