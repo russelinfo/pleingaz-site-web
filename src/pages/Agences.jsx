@@ -1,15 +1,16 @@
 // src/pages/Agences.jsx
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const Agences = () => {
+  const { t } = useTranslation()
+
   return (
     <div className='min-h-screen w-full'>
       {/* Titre au-dessus */}
       <div className='text-center py-6 bg-white shadow-md'>
-        <h1 className='text-3xl font-bold'>Nos Agences</h1>
-        <p className='text-gray-600'>
-          Retrouvez toutes nos agences directement sur la carte interactive.
-        </p>
+        <h1 className='text-3xl font-bold'>{t('agencies.title')}</h1>
+        <p className='text-gray-600'>{t('agencies.description')}</p>
       </div>
 
       {/* Carte Google en plein écran largeur */}

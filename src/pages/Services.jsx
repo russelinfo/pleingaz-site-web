@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, Utensils, Wrench, Users, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 // Composants globaux
 import Header from '../components/Header'
@@ -15,74 +16,78 @@ import installImg from '../assets/images/professionnels.jpg'
 import distributeurImg from '../assets/images/distributeur.jpg'
 import heroImg from '../assets/images/hero2.jpg'
 
-const services = [
-  {
-    icon: <Home className='h-12 w-12 text-red-600' />,
-    title: 'Livraison à Domicile',
-    description:
-      'Un service entièrement dédié à la livraison de gaz chez les particuliers. Commandez facilement et recevez votre bouteille en toute sécurité.',
-    details: [
-      'Livraison garantie en 24h maximum.',
-      'Personnel qualifié pour vous aider à la réception.',
-    ],
-    image: livraisonImg,
-  },
-  {
-    icon: <Utensils className='h-12 w-12 text-red-600' />,
-    title: 'Livraison pour Professionnels',
-    description:
-      'Un service rapide et fiable pour les restaurants, hôtels, cafés et boulangeries.',
-    details: [
-      'Livraison express en 6h maximum.',
-      'Cartes de fidélité pour des réductions.',
-      'Accessoire gratuit après la 10e recharge.',
-    ],
-    image: proImg,
-  },
-  {
-    icon: <Wrench className='h-12 w-12 text-red-600' />,
-    title: 'Installation et Assistance',
-    description:
-      "Nos techniciens qualifiés assurent l'installation de votre bouteille et vous apportent des conseils pratiques.",
-    details: [
-      'Installation de la bouteille sur votre cuisinière.',
-      'Expertise sur vos accessoires (tuyaux, régulateurs...).',
-      'Conseils pour une utilisation en toute sécurité.',
-    ],
-    image: installImg,
-  },
-  {
-    icon: <Users className='h-12 w-12 text-red-600' />,
-    title: 'Assistance aux Distributeurs',
-    description:
-      'Nous soutenons les grossistes, les détaillants et les nouveaux investisseurs qui souhaitent distribuer notre marque.',
-    details: [
-      'Soutien dans les stratégies de distribution.',
-      'Mise à disposition de nos emballages.',
-      'Accompagnement pour investir dans la vente de gaz.',
-    ],
-    image: distributeurImg,
-  },
-]
-
-// Animations pour la modale
-const backdropVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-}
-
-const modalVariants = {
-  hidden: { y: '-100vh', opacity: 0 },
-  visible: {
-    y: '0',
-    opacity: 1,
-    transition: { type: 'spring', stiffness: 100 },
-  },
-  exit: { y: '100vh', opacity: 0 },
-}
-
 const Services = () => {
+  const { t } = useTranslation()
   const [selectedService, setSelectedService] = useState(null)
+
+  const services = [
+    {
+      icon: <Home className='h-12 w-12 text-red-600' />,
+      title: t('Livraison à Domicile'),
+      description: t(
+        'Un service entièrement dédié à la livraison de gaz chez les particuliers. Commandez facilement et recevez votre bouteille en toute sécurité.'
+      ),
+      details: [
+        t('Livraison garantie en 24h maximum.'),
+        t('Personnel qualifié pour vous aider à la réception.'),
+      ],
+      image: livraisonImg,
+    },
+    {
+      icon: <Utensils className='h-12 w-12 text-red-600' />,
+      title: t('Livraison pour Professionnels'),
+      description: t(
+        'Un service rapide et fiable pour les restaurants, hôtels, cafés et boulangeries.'
+      ),
+      details: [
+        t('Livraison express en 6h maximum.'),
+        t('Cartes de fidélité pour des réductions.'),
+        t('Accessoire gratuit après la 10e recharge.'),
+      ],
+      image: proImg,
+    },
+    {
+      icon: <Wrench className='h-12 w-12 text-red-600' />,
+      title: t('Installation et Assistance'),
+      description: t(
+        "Nos techniciens qualifiés assurent l'installation de votre bouteille et vous apportent des conseils pratiques."
+      ),
+      details: [
+        t('Installation de la bouteille sur votre cuisinière.'),
+        t('Expertise sur vos accessoires (tuyaux, régulateurs...).'),
+        t('Conseils pour une utilisation en toute sécurité.'),
+      ],
+      image: installImg,
+    },
+    {
+      icon: <Users className='h-12 w-12 text-red-600' />,
+      title: t('Assistance aux Distributeurs'),
+      description: t(
+        'Nous soutenons les grossistes, les détaillants et les nouveaux investisseurs qui souhaitent distribuer notre marque.'
+      ),
+      details: [
+        t('Soutien dans les stratégies de distribution.'),
+        t('Mise à disposition de nos emballages.'),
+        t('Accompagnement pour investir dans la vente de gaz.'),
+      ],
+      image: distributeurImg,
+    },
+  ]
+
+  const backdropVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  }
+
+  const modalVariants = {
+    hidden: { y: '-100vh', opacity: 0 },
+    visible: {
+      y: '0',
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 100 },
+    },
+    exit: { y: '100vh', opacity: 0 },
+  }
 
   return (
     <>
@@ -97,7 +102,7 @@ const Services = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              Nos Prestations de Service
+              {t('Nos Prestations de Service')}
             </motion.h1>
             <motion.p
               className='text-lg text-gray-600 max-w-2xl mx-auto'
@@ -105,8 +110,9 @@ const Services = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Découvrez la gamme complète de services que PLEINGAZ met à votre
-              disposition, que vous soyez un particulier ou un professionnel.
+              {t(
+                'Découvrez la gamme complète de services que PLEINGAZ met à votre disposition, que vous soyez un particulier ou un professionnel.'
+              )}
             </motion.p>
           </div>
 
@@ -154,11 +160,11 @@ const Services = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              Nous sommes là pour vous servir !
+              {t('Nous sommes là pour vous servir !')}
             </motion.h3>
             <motion.img
               src={heroImg}
-              alt='Service Plein Gaz'
+              alt={t('Service Plein Gaz')}
               className='w-full lg:h-[500px] object-cover rounded-xl shadow-2xl'
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -168,7 +174,6 @@ const Services = () => {
           </div>
         </div>
       </main>
-      
 
       {/* Pop-up (Modale) */}
       <AnimatePresence>

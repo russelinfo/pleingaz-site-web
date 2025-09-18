@@ -1,7 +1,9 @@
 // src/components/ReviewForm.jsx
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const ReviewForm = () => {
+  const { t } = useTranslation()
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [hoverRating, setHoverRating] = useState(0)
@@ -10,7 +12,7 @@ const ReviewForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (rating === 0) {
-      alert('Veuillez donner une note en étoiles.')
+      alert(t('Veuillez donner une note en étoiles.'))
       return
     }
     // Simulate API call to backend, including the profile picture file
@@ -26,7 +28,7 @@ const ReviewForm = () => {
       comment,
       profilePic: profilePic ? profilePic.name : 'No image',
     })
-    alert('Merci pour votre avis ! Il sera visible après validation.')
+    alert(t('Merci pour votre avis ! Il sera visible après validation.'))
 
     // Clear the form
     setRating(0)
@@ -67,10 +69,10 @@ const ReviewForm = () => {
         <div className='bg-white rounded-2xl shadow-lg p-8 md:p-12'>
           <div className='text-center mb-8'>
             <h2 className='text-3xl font-extrabold text-gray-800 mb-2'>
-              Laissez votre avis
+              {t('Laissez votre avis')}
             </h2>
             <p className='text-gray-600'>
-              Partagez votre expérience avec la communauté Plein Gaz.
+              {t('Partagez votre expérience avec la communauté Plein Gaz.')}
             </p>
           </div>
           <form onSubmit={handleSubmit}>
@@ -79,7 +81,7 @@ const ReviewForm = () => {
                 className='block text-gray-700 text-lg font-bold mb-2'
                 htmlFor='rating'
               >
-                Votre note
+                {t('Votre note')}
               </label>
               <div className='flex items-center space-x-1'>{renderStars()}</div>
             </div>
@@ -88,7 +90,7 @@ const ReviewForm = () => {
                 className='block text-gray-700 text-lg font-bold mb-2'
                 htmlFor='comment'
               >
-                Votre commentaire
+                {t('Votre commentaire')}
               </label>
               <textarea
                 id='comment'
@@ -96,7 +98,7 @@ const ReviewForm = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-shadow'
-                placeholder='Partagez votre expérience avec Plein Gaz...'
+                placeholder={t('Partagez votre expérience avec Plein Gaz...')}
               ></textarea>
             </div>
             {/* Ajout du champ pour le téléchargement de l'avatar */}
@@ -105,7 +107,7 @@ const ReviewForm = () => {
                 className='block text-gray-700 text-lg font-bold mb-2'
                 htmlFor='profilePic'
               >
-                Photo de profil (optionnel)
+                {t('Photo de profil (optionnel)')}
               </label>
               <input
                 type='file'
@@ -119,7 +121,7 @@ const ReviewForm = () => {
               type='submit'
               className='w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200'
             >
-              Envoyer mon avis
+              {t('Envoyer mon avis')}
             </button>
           </form>
         </div>

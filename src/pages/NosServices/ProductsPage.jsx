@@ -4,17 +4,19 @@ import { motion } from 'framer-motion'
 import { Search, ShoppingCart, Plus, Minus, Eye, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useNavigate } from 'react-router-dom'
-import productsData from '../../data/productsData'
+import products from '../../data/products'
+import { useTranslation } from 'react-i18next'
 
 const ProductsPage = () => {
+  const { t } = useTranslation()
   const [searchTerm, setSearchTerm] = useState('')
   const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
   const navigate = useNavigate()
 
   const [selectedPrices, setSelectedPrices] = useState({})
 
-  const filteredProducts = productsData.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter((product) =>
+    t(product.name).toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleViewDetails = (productId) => {
@@ -50,7 +52,7 @@ const ProductsPage = () => {
       } else if (priceType === 'empty') {
         priceValue = getPriceValue(product.emptyPrice)
       } else {
-        alert('Veuillez sélectionner une option de prix pour la bouteille.')
+        alert(t('Veuillez sélectionner une option de prix pour la bouteille.'))
         return
       }
     } else {
@@ -85,13 +87,13 @@ const ProductsPage = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className='text-4xl font-extrabold text-gray-800 mb-4 md:mb-0'>
-            Nos Produits
+            {t('Nos Produits')}
           </h1>
           <div className='flex items-center space-x-4'>
             <div className='relative'>
               <input
                 type='text'
-                placeholder='Rechercher un produit...'
+                placeholder={t('Rechercher un produit...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='w-full md:w-80 pl-10 pr-4 py-2 rounded-full border border-gray-300
@@ -134,15 +136,15 @@ const ProductsPage = () => {
                 <div className='relative w-full h-48 flex justify-center items-center p-4 bg-white'>
                   <img
                     src={product.image}
-                    alt={product.name}
+                    alt={t(product.name)}
                     className='max-h-full object-contain'
                   />
                 </div>
 
                 <div className='p-6 flex-1 flex flex-col'>
-                  <h3 className='text-xl font-bold mb-2'>{product.name}</h3>
+                  <h3 className='text-xl font-bold mb-2'>{t(product.name)}</h3>
                   <p className='text-sm opacity-90 mb-4 flex-1'>
-                    {product.description}
+                    {t(product.description)}
                   </p>
 
                   <div className='mb-4'>
@@ -160,10 +162,10 @@ const ProductsPage = () => {
                           />
                           <span className='text-lg font-medium'>
                             {' '}
-                            Bouteille + GPL:{' '}
+                            {t('Bouteille + GPL')}:{' '}
                             {product.fullPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
-                            Fcfa
+                            {t('Fcfa')}
                           </span>
                         </label>
                         <label className='flex items-center space-x-4 cursor-pointer'>
@@ -178,18 +180,18 @@ const ProductsPage = () => {
                           />
                           <span className='text-lg font-medium'>
                             {' '}
-                            Gaz seul:{' '}
+                            {t('Gaz seul')}:{' '}
                             {product.emptyPrice?.toLocaleString('fr-CM') ||
                               'N/A'}{' '}
-                            Fcfa
+                            {t('Fcfa')}
                           </span>
                         </label>
                       </div>
                     ) : (
                       <span className='text-xl font-bold'>
-                        Prix:{' '}
+                        {t('Prix')}:{' '}
                         {getPriceValue(product.price).toLocaleString('fr-CM')}{' '}
-                        Fcfa
+                        {t('Fcfa')}
                       </span>
                     )}
                   </div>
@@ -209,7 +211,9 @@ const ProductsPage = () => {
                                     !selectedPrices[product.id]
                                   ) {
                                     alert(
-                                      'Veuillez sélectionner une option de prix pour la bouteille.'
+                                      t(
+                                        'Veuillez sélectionner une option de prix pour la bouteille.'
+                                      )
                                     )
                                     return
                                   }
@@ -233,7 +237,9 @@ const ProductsPage = () => {
                                     !selectedPrices[product.id]
                                   ) {
                                     alert(
-                                      'Veuillez sélectionner une option de prix pour la bouteille.'
+                                      t(
+                                        'Veuillez sélectionner une option de prix pour la bouteille.'
+                                      )
                                     )
                                     return
                                   }
@@ -253,7 +259,9 @@ const ProductsPage = () => {
                                   !selectedPrices[product.id]
                                 ) {
                                   alert(
-                                    'Veuillez sélectionner une option de prix pour la bouteille.'
+                                    t(
+                                      'Veuillez sélectionner une option de prix pour la bouteille.'
+                                    )
                                   )
                                   return
                                 }
@@ -271,7 +279,7 @@ const ProductsPage = () => {
                               }
                             >
                               <ShoppingCart size={16} />
-                              <span>Ajouter au panier</span>
+                              <span>{t('Ajouter au panier')}</span>
                             </button>
                           )}
                         </div>
@@ -279,12 +287,12 @@ const ProductsPage = () => {
                           onClick={() => handleViewDetails(product.id)}
                           className='flex items-center space-x-2 hover:underline font-semibold'
                         >
-                          <Eye size={18} /> <span>Détails</span>
+                          <Eye size={18} /> <span>{t('Détails')}</span>
                         </button>
                       </>
                     ) : (
                       <span className='font-bold text-yellow-300'>
-                        Rupture de stock
+                        {t('Rupture de stock')}
                       </span>
                     )}
                   </div>

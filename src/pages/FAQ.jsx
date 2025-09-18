@@ -1,216 +1,21 @@
-// src/components/FAQSection.jsx
+// src/pages/FAQPage.jsx
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BsChevronDown } from 'react-icons/bs'
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import faqData from '../data/faqdata'
 
-const faqsData = [
-  {
-    category: 'Général',
-    questions: [
-      {
-        q: 'Comment puis-je passer une commande ?',
-        a: [
-          'Pour passer une commande, parcourez notre catalogue, ajoutez les produits à votre panier et suivez les étapes du processus de paiement. Vous recevrez une confirmation par email une fois la commande validée.',
-        ],
-      },
-      {
-        q: 'Quels moyens de paiement acceptez-vous ?',
-        a: [
-          ' Cartes bancaires (Visa, MasterCard).',
-          ' Paiement mobile (Mobile Money, Orange Money).',
-          ' Virement bancaire (sur demande).',
-        ],
-      },
-      {
-        q: 'Puis-je payer à la livraison ?',
-        a: [' Oui, espèces ou Mobile Money à la réception de la commande.'],
-      },
-      {
-        q: 'Quels sont vos délais de livraison ?',
-        a: [
-          ' Standard : 3 à 5 jours ouvrables.',
-          ' Express : 24h à 48h selon votre localisation.',
-        ],
-      },
-      {
-        q: 'Comment suivre ma commande ?',
-        a: [
-          ' Vous recevez un SMS/Email de confirmation.',
-          ' Nos livreurs vous contactent avant l’arrivée.',
-        ],
-      },
-      {
-        q: 'Quelle est la différence entre une bouteille consignée et une recharge ?',
-        a: [
-          ' Consignée = nouvelle bouteille pleine (inclut la consigne).',
-          " Recharge = échange d'une bouteille vide contre une pleine (moins cher).",
-        ],
-      },
-      {
-        q: 'Quels accessoires propose PleinGaz ?',
-        a: [
-          ' Plaques de cuisson (acier, verre).',
-          ' Détendeurs certifiés.',
-          ' Tuyaux homologués.',
-        ],
-      },
-      {
-        q: 'Comment suivre ma commande ?',
-        a: [
-          ' Vous recevez un SMS/Email de confirmation.',
-          ' Nos livreurs vous contactent avant l’arrivée.',
-        ],
-      },
-      {
-        q: 'Quels sont vos délais de livraison ?',
-        a: [
-          ' Standard : 3 à 5 jours ouvrables.',
-          ' Express : 24h à 48h selon votre localisation.',
-        ],
-      },
-      {
-        q: 'Comment suivre ma commande ?',
-        a: [
-          ' Vous recevez un SMS/Email de confirmation.',
-          ' Nos livreurs vous contactent avant l’arrivée.',
-        ],
-      },
-      {
-        q: 'Comment vérifier mon installation de gaz ?',
-        a: [
-          '✔️ Utiliser un détendeur adapté.',
-          '✔️ Contrôler régulièrement le tuyau.',
-          '✔️ Test avec de l’eau savonneuse (jamais avec une flamme).',
-        ],
-      },
-      {
-        q: 'Que faire en cas de fuite de gaz ?',
-        a: [
-          ' Ne pas allumer de flamme ni appareil électrique.',
-          ' Fermez immédiatement la bouteille.',
-          '📞 Appelez notre service d’assistance.',
-        ],
-      },
-    ],
-  },
-  {
-    category: 'Commandes & Paiement',
-    questions: [
-      {
-        q: 'Quels moyens de paiement acceptez-vous ?',
-        a: [
-          ' Cartes bancaires (Visa, MasterCard).',
-          ' Paiement mobile (Mobile Money, Orange Money).',
-          ' Virement bancaire (sur demande).',
-        ],
-      },
-      {
-        q: 'Puis-je payer à la livraison ?',
-        a: ['✅ Oui, espèces ou Mobile Money à la réception de la commande.'],
-      },
-      {
-        q: 'Quels sont vos délais de livraison ?',
-        a: [
-          '🚚 Standard : 3 à 5 jours ouvrables.',
-          '⚡ Express : 24h à 48h selon votre localisation.',
-        ],
-      },
-      {
-        q: 'Comment suivre ma commande ?',
-        a: [
-          '📩 Vous recevez un SMS/Email de confirmation.',
-          '📍Nos livreurs vous contactent avant l’arrivée.',
-        ],
-      },
-      {
-        q: 'Quelle est la différence entre une bouteille consignée et une recharge ?',
-        a: [
-          '🟢 Consignée = nouvelle bouteille pleine (inclut la consigne).',
-          "🔄 Recharge = échange d'une bouteille vide contre une pleine (moins cher).",
-        ],
-      },
-      {
-        q: 'Quels accessoires propose PleinGaz ?',
-        a: [
-          '🔥 Plaques de cuisson (acier, verre).',
-          '🔧 Détendeurs certifiés.',
-          '🧰 Tuyaux homologués.',
-        ],
-      },
-    ],
-  },
-  {
-    category: 'Livraison',
-    questions: [
-      {
-        q: 'Quels sont vos délais de livraison ?',
-        a: [
-          '🚚 Standard : 3 à 5 jours ouvrables.',
-          '⚡ Express : 24h à 48h selon votre localisation.',
-        ],
-      },
-      {
-        q: 'Comment suivre ma commande ?',
-        a: [
-          '📩 Vous recevez un SMS/Email de confirmation.',
-          '📍 Nos livreurs vous contactent avant l’arrivée.',
-        ],
-      },
-    ],
-  },
-  {
-    category: 'Produits & Accessoires',
-    questions: [
-      {
-        q: 'Quelle est la différence entre une bouteille consignée et une recharge ?',
-        a: [
-          '🟢 Consignée = nouvelle bouteille pleine (inclut la consigne).',
-          "🔄 Recharge = échange d'une bouteille vide contre une pleine (moins cher).",
-        ],
-      },
-      {
-        q: 'Quels accessoires propose PleinGaz ?',
-        a: [
-          '🔥 Plaques de cuisson (acier, verre).',
-          '🔧 Détendeurs certifiés.',
-          '🧰 Tuyaux homologués.',
-        ],
-      },
-    ],
-  },
-  {
-    category: 'Sécurité',
-    questions: [
-      {
-        q: 'Comment vérifier mon installation de gaz ?',
-        a: [
-          '✔️ Utiliser un détendeur adapté.',
-          '✔️ Contrôler régulièrement le tuyau.',
-          '✔️ Test avec de l’eau savonneuse (jamais avec une flamme).',
-        ],
-      },
-      {
-        q: 'Que faire en cas de fuite de gaz ?',
-        a: [
-          '❌ Ne pas allumer de flamme ni appareil électrique.',
-          '✅ Fermez immédiatement la bouteille.',
-          '📞 Appelez notre service d’assistance.',
-        ],
-      },
-    ],
-  },
-]
-
-const FAQ = () => {
+const FAQPage = () => {
+  const { t } = useTranslation()
   const [openIndex, setOpenIndex] = useState(null)
-  const [selectedCategory, setSelectedCategory] = useState(faqsData[0].category)
+  const [selectedCategory, setSelectedCategory] = useState(faqData[0].category)
 
   const toggleQuestion = (index) => {
     setOpenIndex(openIndex === index ? null : index)
   }
 
-  const filteredFaqs = faqsData.find((faq) => faq.category === selectedCategory)
+  const filteredFaqs = faqData.find((faq) => faq.category === selectedCategory)
 
   return (
     <section className='bg-gray-50 py-16 px-6 md:px-12 min-h-screen'>
@@ -218,23 +23,24 @@ const FAQ = () => {
         {/* Titre et description centraux */}
         <div className='text-center mb-10'>
           <h1 className='text-4xl md:text-5xl font-extrabold text-gray-900 mb-4'>
-            Foire aux questions
+            {t('Foire aux questions')}
           </h1>
           <p className='text-lg text-gray-600 max-w-xl mx-auto'>
-            Voici les questions les plus fréquemment posées sur nos produits et
-            services. Vous ne trouvez pas la réponse que vous cherchez ?
+            {t(
+              'Voici les questions les plus fréquemment posées sur nos produits et services. Vous ne trouvez pas la réponse que vous cherchez ?'
+            )}
             <NavLink
               to='/contact'
               className='text-red-600 font-medium hover:underline ml-1'
             >
-              Discutez avec notre équipe !
+              {t('Discutez avec notre équipe !')}
             </NavLink>
           </p>
         </div>
 
         {/* Boutons de catégories */}
         <div className='flex flex-wrap justify-center gap-2 mb-12'>
-          {faqsData.map((faq, index) => (
+          {faqData.map((faq, index) => (
             <button
               key={index}
               onClick={() => setSelectedCategory(faq.category)}
@@ -245,7 +51,7 @@ const FAQ = () => {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
-              {faq.category}
+              {t(`faq.categories.${faq.category}`)}
             </button>
           ))}
         </div>
@@ -264,7 +70,7 @@ const FAQ = () => {
                     onClick={() => toggleQuestion(qIdx)}
                     className='w-full flex justify-between items-center px-6 py-5 text-left font-medium text-lg text-gray-900 hover:bg-gray-50 transition'
                   >
-                    <span>{item.q}</span>
+                    <span>{t(item.qKey)}</span>
                     <BsChevronDown
                       className={`transform transition-transform duration-300 ${
                         isOpen ? 'rotate-180 text-red-600' : 'text-gray-400'
@@ -281,8 +87,8 @@ const FAQ = () => {
                         className='px-6 pb-6 pt-2 text-gray-700 leading-relaxed'
                       >
                         <ul className='space-y-2'>
-                          {item.a.map((line, i) => (
-                            <li key={i}>{line}</li>
+                          {item.aKeys.map((lineKey, i) => (
+                            <li key={i}>{t(lineKey)}</li>
                           ))}
                         </ul>
                       </motion.div>
@@ -297,4 +103,4 @@ const FAQ = () => {
   )
 }
 
-export default FAQ
+export default FAQPage

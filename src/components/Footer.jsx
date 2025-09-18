@@ -1,6 +1,7 @@
 // src/components/Footer.jsx
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { NavLink } from 'react-router-dom'
 import { FaTiktok } from 'react-icons/fa'
 import {
   Facebook,
@@ -25,7 +26,10 @@ const Footer = () => {
         {/* Colonne 1 - Logo + description */}
         <div className='flex flex-col space-y-3'>
           {/* ✅ Logo ajusté sans espace blanc */}
-          <img src={logo} alt='Logo' className='w-60 h-auto pt-0 m-0 mb-6' />
+          <NavLink to='/'>
+            <img src={logo} alt='Logo' className='w-60 h-auto pt-0 m-0 mb-6' />
+          </NavLink>
+          
 
           {/* ✅ Paragraphe rapproché */}
           <p className='text-base font-semibold text-gray-100 leading-relaxed m-0'>
@@ -102,7 +106,7 @@ const Footer = () => {
 
       {/* Bas de page */}
       <div className='relative border-t border-white/20 mt-10 pt-6 text-center text-sm text-gray-200 z-10'>
-        © {new Date().getFullYear()} {t('Plein Gaz. Tous droits réservés.')}
+        © {new Date().getFullYear()} {t('PLEINGAZ. Tous droits réservés.')}
       </div>
     </footer>
   )

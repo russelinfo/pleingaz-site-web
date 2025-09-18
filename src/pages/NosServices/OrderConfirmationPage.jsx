@@ -3,18 +3,20 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, Truck, MapPin } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { orderDetails } = location.state || {}
+  const { t } = useTranslation()
 
   const sampleOrder = {
     orderNumber: 'PGZ-000000',
     totalAmount: 0,
     deliveryDate: '-',
-    deliveryAddress: 'Non spécifiée',
-    paymentMethod: 'Non spécifié',
+    deliveryAddress: t('Non spécifiée'),
+    paymentMethod: t('Non spécifié'),
     items: [],
   }
 
@@ -38,24 +40,26 @@ const OrderConfirmationPage = () => {
             <CheckCircle className='text-green-500 h-24 w-24' />
           </div>
           <h1 className='text-3xl font-extrabold text-gray-800 mb-2'>
-            Commande validée avec succès !
+            {t('Commande validée avec succès !')}
           </h1>
           <p className='text-lg text-gray-600 mb-6'>
-            Merci pour votre commande. Un agent va vous contacter sous peu.
+            {t(
+              'Merci pour votre commande. Un agent va vous contacter sous peu.'
+            )}
           </p>
 
           {/* Infos principales */}
           <div className='border-t border-b py-6 mb-6'>
             <div className='flex justify-between items-center mb-2'>
-              <h3 className='font-bold text-gray-700'>Numéro :</h3>
+              <h3 className='font-bold text-gray-700'>{t('Numéro :')}</h3>
               <span className='font-mono text-gray-800'>
                 {order.orderNumber}
               </span>
             </div>
             <div className='flex justify-between items-center mb-2'>
-              <h3 className='font-bold text-gray-700'>Total :</h3>
+              <h3 className='font-bold text-gray-700'>{t('Total :')}</h3>
               <span className='font-extrabold text-red-600 text-2xl'>
-                {order.totalAmount.toLocaleString('fr-CM')} Fcfa
+                {order.totalAmount.toLocaleString('fr-CM')} {t('Fcfa')}
               </span>
             </div>
           </div>
@@ -65,10 +69,10 @@ const OrderConfirmationPage = () => {
             <div className='bg-gray-100 p-4 rounded-lg'>
               <div className='flex items-center text-red-600 mb-2'>
                 <Truck size={24} className='mr-2' />
-                <h4 className='font-bold'>Livraison</h4>
+                <h4 className='font-bold'>{t('Livraison')}</h4>
               </div>
               <p className='text-gray-700 font-semibold'>
-                Date prévue : {order.deliveryDate}
+                {t('Date prévue :')} {order.deliveryDate}
               </p>
               <p className='text-gray-600 text-sm'>
                 <MapPin size={16} className='inline mr-1' />{' '}
@@ -79,29 +83,30 @@ const OrderConfirmationPage = () => {
             <div className='bg-gray-100 p-4 rounded-lg'>
               <div className='flex items-center text-red-600 mb-2'>
                 <MapPin size={24} className='mr-2' />
-                <h4 className='font-bold'>Paiement</h4>
+                <h4 className='font-bold'>{t('Paiement')}</h4>
               </div>
               <p className='text-gray-700 font-semibold'>
-                Méthode : {order.paymentMethod}
+                {t('Méthode :')} {order.paymentMethod}
               </p>
               <p className='text-gray-600 text-sm'>
-                Vous payez à la réception.
+                {t('Vous payez à la réception.')}
               </p>
             </div>
           </div>
 
           {/* Liste des articles */}
           <h2 className='text-xl font-bold text-gray-800 mb-4'>
-            Articles commandés
+            {t('Articles commandés')}
           </h2>
           <ul className='text-left space-y-2 mb-8'>
             {order.items.map((item, idx) => (
               <li key={idx} className='flex justify-between border-b pb-2'>
                 <span>
-                  {item.name} (x{item.quantity})
+                  {t(item.name)} (x{item.quantity})
                 </span>
                 <span className='font-semibold text-red-600'>
-                  {(item.price * item.quantity).toLocaleString('fr-CM')} Fcfa
+                  {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
+                  {t('Fcfa')}
                 </span>
               </li>
             ))}
@@ -113,7 +118,7 @@ const OrderConfirmationPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Retour à l'accueil
+            {t("Retour à l'accueil")}
           </motion.button>
         </motion.div>
       </div>

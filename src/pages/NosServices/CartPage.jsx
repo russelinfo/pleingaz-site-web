@@ -4,15 +4,19 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-import productsData from '../../data/productsData'
+import products from '../../data/products'
+import { useTranslation } from 'react-i18next'
 
 const CartPage = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { cart, handleUpdateCart, emptyCart } = useCart()
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('Paiement à la livraison')
+  const [paymentMethod, setPaymentMethod] = useState(
+    t('Paiement à la livraison')
+  )
 
   // Helper function to get the actual price value
   const getPriceValue = (price) => {
@@ -31,7 +35,7 @@ const CartPage = () => {
       const productId = parts[0]
       const priceType = parts[1] // 'full' or 'empty' if it's a gas bottle
 
-      const product = productsData.find((p) => p.id === productId)
+      const product = products.find((p) => p.id === productId)
 
       if (!product) {
         return null // Product not found
@@ -43,18 +47,18 @@ const CartPage = () => {
       if (product.isGasBottle) {
         if (priceType === 'full') {
           itemPrice = getPriceValue(product.fullPrice)
-          itemName = `${product.name} (avec GPL)`
+          itemName = `${t(product.name)} (${t('avec GPL')})`
         } else if (priceType === 'empty') {
           itemPrice = getPriceValue(product.emptyPrice)
-          itemName = `${product.name} (Gaz seul)`
+          itemName = `${t(product.name)} (${t('Gaz seul')})`
         } else {
           // This case should ideally not happen if cartIds are formed correctly
           itemPrice = getPriceValue(product.price) // Fallback to base price if no type
-          itemName = `${product.name} (Inconnu)`
+          itemName = `${t(product.name)} (${t('Inconnu')})`
         }
       } else {
         itemPrice = getPriceValue(product.price)
-        itemName = product.name
+        itemName = t(product.name)
       }
 
       // Ensure itemPrice is correctly determined and not NaN
@@ -90,13 +94,15 @@ const CartPage = () => {
   const handleValidateOrder = () => {
     if (cartItems.length === 0) {
       alert(
-        'Votre panier est vide. Veuillez ajouter des articles pour commander.'
+        t(
+          'Votre panier est vide. Veuillez ajouter des articles pour commander.'
+        )
       )
       return
     }
 
     if (!deliveryDate || !deliveryAddress) {
-      alert("Veuillez remplir la date et l'adresse de livraison.")
+      alert(t("Veuillez remplir la date et l'adresse de livraison."))
       return
     }
 
@@ -130,7 +136,7 @@ const CartPage = () => {
       <div className='container mx-auto px-4'>
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
-            Votre Panier
+            {t('Votre Panier')}
           </h1>
           <motion.button
             onClick={() => navigate('/products')} // Changed to navigate to /products instead of -1
@@ -138,14 +144,14 @@ const CartPage = () => {
             whileHover={{ x: -5 }}
           >
             <ArrowLeft size={20} className='mr-2' />
-            Continuer mes achats
+            {t('Continuer mes achats')}
           </motion.button>
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
-              Récapitulatif de votre commande
+              {t('Récapitulatif de votre commande')}
             </h2>
             <div className='space-y-6'>
               {cartItems.length > 0 ? (
@@ -167,13 +173,13 @@ const CartPage = () => {
                       </h3>
                       <p className='text-sm text-gray-600'>
                         {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
-                        Fcfa
+                        {t('Fcfa')}
                       </p>
                     </div>
                     <div className='text-right flex flex-col items-end'>
                       <p className='text-xl font-bold text-red-600'>
                         {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
-                        Fcfa
+                        {t('Fcfa')}
                       </p>
                       <div className='flex items-center space-x-2 mt-2'>
                         <button
@@ -202,7 +208,7 @@ const CartPage = () => {
                 ))
               ) : (
                 <p className='text-center text-gray-500 text-lg'>
-                  Votre panier est vide.
+                  {t('Votre panier est vide.')}
                 </p>
               )}
             </div>
@@ -210,7 +216,7 @@ const CartPage = () => {
 
           <div className='bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
-              Informations de livraison
+              {t('Informations de livraison')}
             </h2>
             <div className='space-y-6'>
               <div>
@@ -218,7 +224,7 @@ const CartPage = () => {
                   htmlFor='deliveryDate'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Date de livraison
+                  {t('Date de livraison')}
                 </label>
                 <input
                   type='date'
@@ -235,14 +241,14 @@ const CartPage = () => {
                   htmlFor='deliveryAddress'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Votre adresse
+                  {t('Votre adresse')}
                 </label>
                 <input
                   type='text'
                   id='deliveryAddress'
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder='Ex: Rue 5, Quartier des Fleurs'
+                  placeholder={t('Ex: Rue 5, Quartier des Fleurs')}
                   className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
                   required
                 />
@@ -252,20 +258,22 @@ const CartPage = () => {
                   htmlFor='deliveryDetails'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Détails (à côté de…)
+                  {t('Détails (à côté de…)')}
                 </label>
                 <textarea
                   id='deliveryDetails'
                   value={deliveryDetails}
                   onChange={(e) => setDeliveryDetails(e.target.value)}
-                  placeholder='Ex: Maison à côté de la pharmacie du carrefour'
+                  placeholder={t(
+                    'Ex: Maison à côté de la pharmacie du carrefour'
+                  )}
                   rows='3'
                   className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
                 />
               </div>
               <div>
                 <h3 className='text-xl font-bold text-gray-800 mb-2'>
-                  Mode de paiement
+                  {t('Mode de paiement')}
                 </h3>
                 <select
                   value={paymentMethod}
@@ -273,10 +281,10 @@ const CartPage = () => {
                   className='block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
                 >
                   <option value='Paiement à la livraison'>
-                    Paiement à la livraison
+                    {t('Paiement à la livraison')}
                   </option>
                   <option value='Mobile Money (MTN/Orange)'>
-                    Mobile Money (MTN/Orange)
+                    {t('Mobile Money (MTN/Orange)')}
                   </option>
                 </select>
               </div>
@@ -284,10 +292,10 @@ const CartPage = () => {
 
             <div className='mt-8'>
               <h3 className='text-2xl font-bold text-gray-800'>
-                Total de la commande
+                {t('Total de la commande')}
               </h3>
               <p className='text-4xl font-extrabold text-red-600 mt-2'>
-                {calculateTotal().toLocaleString('fr-CM')} Fcfa
+                {calculateTotal().toLocaleString('fr-CM')} {t('Fcfa')}
               </p>
               <motion.button
                 onClick={handleValidateOrder}
@@ -296,7 +304,7 @@ const CartPage = () => {
                 whileTap={{ scale: 0.98 }}
                 disabled={cartItems.length === 0}
               >
-                Valider la commande
+                {t('Valider la commande')}
               </motion.button>
             </div>
           </div>

@@ -161,7 +161,10 @@ const Header = () => {
         <div className='flex flex-col md:flex-row md:justify-between md:items-center py-5'>
           {/* Logo */}
           <div className='flex-shrink-0 flex justify-center md:justify-start mb-3 md:mb-0'>
-            <img src={logo} alt='Logo' className='h-16 w-auto' />
+            <NavLink to='/'>
+             <img src={logo} alt='Logo' className='h-16 w-auto' /> 
+             </NavLink>
+            
           </div>
 
           {/* Recherche Mobile visible */}
