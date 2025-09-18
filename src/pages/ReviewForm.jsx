@@ -1,6 +1,7 @@
 // src/components/ReviewForm.jsx
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import SocialSidebar from '../components/SocialSidebar'
 
 const ReviewForm = () => {
   const { t } = useTranslation()
@@ -65,6 +66,7 @@ const ReviewForm = () => {
 
   return (
     <section className='bg-gray-50 py-20 px-4'>
+      <SocialSidebar />
       <div className='container mx-auto max-w-2xl'>
         <div className='bg-white rounded-2xl shadow-lg p-8 md:p-12'>
           <div className='text-center mb-8'>

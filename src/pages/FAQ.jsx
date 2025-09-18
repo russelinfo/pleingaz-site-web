@@ -5,6 +5,7 @@ import { BsChevronDown } from 'react-icons/bs'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import faqData from '../data/faqdata'
+import SocialSidebar from '../components/SocialSidebar'
 
 const FAQPage = () => {
   const { t } = useTranslation()
@@ -19,6 +20,7 @@ const FAQPage = () => {
 
   return (
     <section className='bg-gray-50 py-16 px-6 md:px-12 min-h-screen'>
+      <SocialSidebar />
       <div className='max-w-4xl mx-auto'>
         {/* Titre et description centraux */}
         <div className='text-center mb-10'>

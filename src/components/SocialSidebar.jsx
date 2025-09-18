@@ -22,18 +22,18 @@ const SocialSidebar = () => {
       </a>
 
       {/* Twitter */}
-      <a
+      {/* <a
         href='https://twitter.com'
         target='_blank'
         rel='noopener noreferrer'
         className='bg-white p-3 rounded-full shadow-md hover:bg-sky-500 hover:text-white transition-all duration-300 flex items-center justify-center'
       >
         <FaTwitter className='w-5 h-5 text-sky-500 hover:text-white' />
-      </a>
+      </a> */}
 
       {/* Instagram */}
       <a
-        href='https://instagram.com'
+        href='https://www.instagram.com/infotechpleingaz?igsh=ODRjcmlsc2xvbGU2'
         target='_blank'
         rel='noopener noreferrer'
         className='bg-white p-3 rounded-full shadow-md hover:bg-pink-500 hover:text-white transition-all duration-300 flex items-center justify-center'
@@ -43,7 +43,7 @@ const SocialSidebar = () => {
 
       {/* LinkedIn */}
       <a
-        href='https://linkedin.com'
+        href='https://www.linkedin.com/in/infotech-gaz-1ab6881a9/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app'
         target='_blank'
         rel='noopener noreferrer'
         className='bg-white p-3 rounded-full shadow-md hover:bg-blue-800 hover:text-white transition-all duration-300 flex items-center justify-center'
@@ -51,7 +51,7 @@ const SocialSidebar = () => {
         <FaLinkedinIn className='w-5 h-5 text-blue-800 hover:text-white' />
       </a>
       <a
-        href='https://linkedin.com'
+        href='https://www.tiktok.com/@infotech.pleingaz?_t=ZM-8zo0AvfP3S9&_r=1'
         target='_blank'
         rel='noopener noreferrer'
         className='bg-white p-3 rounded-full shadow-md hover:bg-blue-800 hover:text-white transition-all duration-300 flex items-center justify-center'

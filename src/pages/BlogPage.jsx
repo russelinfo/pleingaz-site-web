@@ -3,6 +3,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import blogData from '../data/blogData' // Importation des données du blog
+import SocialSidebar from '../components/SocialSidebar'
 
 // Animation de base pour les cartes
 const cardVariants = {
@@ -19,6 +20,7 @@ const BlogPage = () => {
 
   return (
     <div className='bg-gray-50 py-16 px-6 md:px-12 min-h-screen'>
+      <SocialSidebar />
       {/* En-tête de la page */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}

@@ -2,12 +2,13 @@
 import React from 'react'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-
+import SocialSidebar from '../components/SocialSidebar'
 const Contact = () => {
   const { t } = useTranslation()
 
   return (
     <div className='min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 py-12'>
+      <SocialSidebar />
       {/* Titre */}
       <h1 className='text-4xl md:text-5xl font-extrabold text-gray-900 mb-4'>
         {t('Contactez-nous')}

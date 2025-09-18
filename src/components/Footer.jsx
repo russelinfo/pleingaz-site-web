@@ -29,7 +29,6 @@ const Footer = () => {
           <NavLink to='/'>
             <img src={logo} alt='Logo' className='w-60 h-auto pt-0 m-0 mb-6' />
           </NavLink>
-          
 
           {/* ✅ Paragraphe rapproché */}
           <p className='text-base font-semibold text-gray-100 leading-relaxed m-0'>
@@ -46,7 +45,7 @@ const Footer = () => {
           </h4>
           <ul className='space-y-2'>
             <li>
-              <a href='/a-propos' className='hover:text-gray-300 transition'>
+              <a href='/about' className='hover:text-gray-300 transition'>
                 {t('À propos')}
               </a>
             </li>
@@ -63,6 +62,11 @@ const Footer = () => {
             <li>
               <a href='/blog' className='hover:text-gray-300 transition'>
                 {t('Blog')}
+              </a>
+            </li>
+            <li>
+              <a href='/faq' className='hover:text-gray-300 transition'>
+                {t('FAQ')}
               </a>
             </li>
           </ul>
@@ -85,19 +89,35 @@ const Footer = () => {
 
           {/* Réseaux sociaux */}
           <div className='flex gap-4 mt-4'>
-            <a href='#' className='hover:text-gray-300 transition'>
+            <a
+              href='https://web.facebook.com/profile.php?id=100083413507172'
+              className='hover:text-gray-300 transition'
+              target='_blank'
+            >
               <Facebook />
             </a>
-            <a href='#' className='hover:text-gray-300 transition'>
+            {/* <a href='#' className='hover:text-gray-300 transition'>
               <Twitter />
-            </a>
-            <a href='#' className='hover:text-gray-300 transition'>
+            </a> */}
+            <a
+              href='https://www.instagram.com/infotechpleingaz?igsh=ODRjcmlsc2xvbGU2'
+              className='hover:text-gray-300 transition'
+              target='_blank'
+            >
               <Instagram />
             </a>
-            <a href='#' className='hover:text-gray-300 transition'>
+            <a
+              href='https://www.linkedin.com/in/infotech-gaz-1ab6881a9/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app'
+              className='hover:text-gray-300 transition'
+              target='_blank'
+            >
               <Linkedin />
             </a>
-            <a href='#' className='hover:text-gray-300 transition'>
+            <a
+              href='https://www.tiktok.com/@infotech.pleingaz?_t=ZM-8zo0AvfP3S9&_r=1'
+              className='hover:text-gray-300 transition'
+              target='_blank'
+            >
               <FaTiktok size={22} />
             </a>
           </div>
