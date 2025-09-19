@@ -1,10 +1,12 @@
 // routes/paymentRoutes.js
 import express from 'express'
 import fetch from 'node-fetch'
+import dotenv from 'dotenv'
 
 const router = express.Router()
 
 // Initialiser un paiement
+dotenv.config()
 router.post('/initialize', async (req, res) => {
   try {
     const {
@@ -80,6 +82,40 @@ router.get('/verify/:reference', async (req, res) => {
 router.post('/webhook', express.json(), (req, res) => {
   console.log('📩 Webhook reçu:', req.body)
   res.status(200).send('Webhook reçu')
+})
+
+router.get('/callback', async (req, res) => {
+  const reference = req.query.reference
+
+  try {
+    const response = await fetch(
+      `https://api.notchpay.co/payments/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    const data = await response.json()
+
+    // 🔎 Affiche dans ta console ce que NotchPay renvoie
+    console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
+
+    if (data.transaction && data.transaction.status === 'complete') {
+      res.send('✅ Payment successful!')
+    } else {
+      res.send('⚠️ Payment not completed.')
+      console.log(
+        'Valeur de la clé privée chargée :',
+        process.env.NOTCH_PUBLIC_KEY
+      )
+    }
+  } catch (error) {
+    console.error('❌ Error verifying payment:', error)
+    res.status(500).send('Error verifying payment')
+  }
 })
 
 export default router
