@@ -35,11 +35,11 @@ router.post('/initialize', async (req, res) => {
         currency,
         customer: { name, email, phone },
         description: description || 'Paiement PleinGaz',
-        callback: 'http://localhost:5000/api/payments/callback', // tu pourras modifier pour ton frontend
+        callback: 'http://localhost:5000/api/payments/callback', // tu pourras
+        
         reference: 'pleingaz-' + Date.now(),
       }),
     })
-
     const data = await response.json()
     console.log('✅ NotchPay response:', data)
 
@@ -78,10 +78,40 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-// Webhook (optionnel)
+/* POST /api/payments/webhook
+ * Réception des événements envoyés par NotchPay
+ */
 router.post('/webhook', express.json(), (req, res) => {
-  console.log('📩 Webhook reçu:', req.body)
-  res.status(200).send('Webhook reçu')
+  try {
+    const event = req.body
+
+    console.log('📩 Webhook reçu:', event)
+
+    // ⚠️ Ici, tu pourrais vérifier la signature NotchPay si elle est envoyée
+    // Exemple : comparer req.headers['notchpay-signature'] avec ta clé
+
+    // Gestion des différents types d'événements
+    switch (event.type) {
+      case 'payment.complete':
+        console.log('✅ Paiement complété :', event.data)
+        // 👉 Ici : mettre à jour la commande dans ta DB comme "payée"
+        break
+
+      case 'payment.failed':
+        console.log('❌ Paiement échoué :', event.data)
+        // 👉 Ici : marquer la commande comme "échouée"
+        break
+
+      default:
+        console.log('ℹ️ Autre événement reçu :', event.type)
+    }
+
+    // Réponse à NotchPay pour dire "ok j’ai reçu"
+    res.status(200).send('Webhook reçu')
+  } catch (error) {
+    console.error('Erreur Webhook:', error)
+    res.status(500).send('Erreur serveur')
+  }
 })
 
 router.get('/callback', async (req, res) => {
@@ -92,7 +122,7 @@ router.get('/callback', async (req, res) => {
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
           'Content-Type': 'application/json',
         },
       }
