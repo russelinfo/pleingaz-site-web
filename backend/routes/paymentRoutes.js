@@ -78,31 +78,28 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-/* POST /api/payments/webhook
-* Réception des événements envoyés par NotchPay
-*/
+// Webhook NotchPay
 router.post('/webhook', express.json(), (req, res) => {
-  let event = {};
+  const event = req.body;
 
+  // 1. Traiter la requête de vérification du webhook
+  if (event.type === 'hook.verify') {
+    console.log("✅ Requête de vérification du webhook reçue. Envoi du code en retour :", event.data.code);
+    return res.status(200).json({ code: event.data.code });
+  }
+
+  // 2. Traiter les autres événements du webhook
   try {
-    // La ligne ci-dessous n'est plus nécessaire car express.json() le fait
-    // if (req.is('application/json')) {
-      event = req.body;
-    // }
-    // Cas où NotchPay fait juste un "ping"
-    if (!event.type) {
-      console.log("🔎 Webhook test reçu (pas d'événement):", event);
-      return res.status(200).send("Webhook OK");
-    }
-
     console.log("📩 Webhook reçu:", event);
 
     switch (event.type) {
       case "payment.complete":
         console.log("✅ Paiement complété :", event.data);
+        // 👉 Ici : mettre à jour la commande dans ta DB comme "payée"
         break;
       case "payment.failed":
         console.log("❌ Paiement échoué :", event.data);
+        // 👉 Ici : marquer la commande comme "échouée"
         break;
       default:
         console.log("ℹ️ Autre événement :", event.type);
