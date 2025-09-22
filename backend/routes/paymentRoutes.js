@@ -113,6 +113,13 @@ router.post(
       const secret = process.env.NOTCHPAY_WEBHOOK_HASH
       const payload = req.body.toString('utf8')
 
+      // 🔎 Cas particulier : validation/ping NotchPay (pas de signature envoyée)
+      if (!signature) {
+        console.log('🔎 Webhook test/validation reçu (pas de signature)')
+        return res.status(200).send('Webhook endpoint verified')
+      }
+
+      // ✅ Vérification signature pour les vrais événements
       if (!verifySignature(payload, signature, secret)) {
         console.error('❌ Invalid webhook signature')
         return res.status(403).send('Invalid signature')
@@ -121,7 +128,6 @@ router.post(
       const event = JSON.parse(payload)
       console.log('📩 Webhook validé:', event)
 
-      // Traitement selon le type d’événement
       switch (event.type) {
         case 'payment.complete':
           console.log('✅ Paiement complété :', event.data)
