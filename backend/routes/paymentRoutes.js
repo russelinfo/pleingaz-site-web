@@ -2,6 +2,7 @@
 import express from 'express'
 import fetch from 'node-fetch'
 import dotenv from 'dotenv'
+import crypto from 'crypto'
 
 const router = express.Router()
 
@@ -78,40 +79,59 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-// Webhook NotchPay
-router.post('/webhook', express.json(), (req, res) => {
-  const event = req.body;
 
-  // 1. Traiter la requête de vérification du webhook
-  if (event.type === 'hook.verify') {
-    console.log("✅ Requête de vérification du webhook reçue. Envoi du code en retour.");
-    // Renvoyer le code en texte brut
-    return res.status(200).send(event.data.code);
-  }
+/**
+ * Vérification de la signature NotchPay
+ */
+function verifySignature(payload, signature, secret) {
+  const hmac = crypto.createHmac("sha256", secret);
+  const calculatedSignature = hmac.update(payload).digest("hex");
 
-  // 2. Traiter les autres événements du webhook
-  try {
-    console.log("📩 Webhook reçu:", event);
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(calculatedSignature, "hex"),
+      Buffer.from(signature, "hex")
+    );
+  } catch {
+    return false;
+  }
+}
 
-    switch (event.type) {
-      case "payment.complete":
-        console.log("✅ Paiement complété :", event.data);
-        // 👉 Ici : mettre à jour la commande dans ta DB comme "payée"
-        break;
-      case "payment.failed":
-        console.log("❌ Paiement échoué :", event.data);
-        // 👉 Ici : marquer la commande comme "échouée"
-        break;
-      default:
-        console.log("ℹ️ Autre événement :", event.type);
-    }
+/**
+ * Webhook NotchPay
+ */
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }), // on capte le body brut
+  (req, res) => {
+    const signature = req.headers["x-notch-signature"];
+    const payload = req.body.toString(); // body brut
+    const secret = process.env.NOTCHPAY_WEBHOOK_HASH; // ⚠️ défini dans ton .env
 
-    res.status(200).send("Webhook reçu");
-  } catch (error) {
-    console.error("Erreur Webhook:", error);
-    res.status(200).send("Erreur mais endpoint joignable");
-  }
-});
+    // Vérification
+    if (!verifySignature(payload, signature, secret)) {
+      console.error("❌ Invalid webhook signature");
+      return res.status(403).send("Invalid signature");
+    }
+
+    // OK → on parse et on traite
+    const event = JSON.parse(payload);
+    console.log("📩 Webhook validé:", event);
+
+    switch (event.type) {
+      case "payment.complete":
+        console.log("✅ Paiement complété :", event.data);
+        break;
+      case "payment.failed":
+        console.log("❌ Paiement échoué :", event.data);
+        break;
+      default:
+        console.log("ℹ️ Autre événement :", event.type);
+    }
+
+    res.status(200).send("Webhook reçu et validé");
+  }
+);
 
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
