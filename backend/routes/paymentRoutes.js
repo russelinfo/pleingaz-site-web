@@ -84,8 +84,9 @@ router.post('/webhook', express.json(), (req, res) => {
 
   // 1. Traiter la requête de vérification du webhook
   if (event.type === 'hook.verify') {
-    console.log("✅ Requête de vérification du webhook reçue. Envoi du code en retour :", event.data.code);
-    return res.status(200).json({ code: event.data.code });
+    console.log("✅ Requête de vérification du webhook reçue. Envoi du code en retour.");
+    // Renvoyer le code en texte brut
+    return res.status(200).send(event.data.code);
   }
 
   // 2. Traiter les autres événements du webhook
