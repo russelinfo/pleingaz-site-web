@@ -78,42 +78,42 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-// Webhook NotchPay
-router.post('/webhook', (req, res) => {
-  let event = {};
+/* POST /api/payments/webhook
+* Réception des événements envoyés par NotchPay
+*/
+router.post('/webhook', express.json(), (req, res) => {
+  let event = {};
 
-  try {
-    // Si c’est bien du JSON, on parse
-    if (req.is('application/json')) {
-      event = req.body;
-    }
+  try {
+    // La ligne ci-dessous n'est plus nécessaire car express.json() le fait
+    // if (req.is('application/json')) {
+      event = req.body;
+    // }
+    // Cas où NotchPay fait juste un "ping"
+    if (!event.type) {
+      console.log("🔎 Webhook test reçu (pas d'événement):", event);
+      return res.status(200).send("Webhook OK");
+    }
 
-    // Cas où NotchPay fait juste un "ping"
-    if (!event.type) {
-      console.log("🔎 Webhook test reçu (pas d'événement):", event);
-      return res.status(200).send("Webhook OK");
-    }
+    console.log("📩 Webhook reçu:", event);
 
-    console.log("📩 Webhook reçu:", event);
+    switch (event.type) {
+      case "payment.complete":
+        console.log("✅ Paiement complété :", event.data);
+        break;
+      case "payment.failed":
+        console.log("❌ Paiement échoué :", event.data);
+        break;
+      default:
+        console.log("ℹ️ Autre événement :", event.type);
+    }
 
-    switch (event.type) {
-      case "payment.complete":
-        console.log("✅ Paiement complété :", event.data);
-        break;
-      case "payment.failed":
-        console.log("❌ Paiement échoué :", event.data);
-        break;
-      default:
-        console.log("ℹ️ Autre événement :", event.type);
-    }
-
-    res.status(200).send("Webhook reçu");
-  } catch (error) {
-    console.error("Erreur Webhook:", error);
-    res.status(200).send("Erreur mais endpoint joignable"); // toujours renvoyer 200
-  }
+    res.status(200).send("Webhook reçu");
+  } catch (error) {
+    console.error("Erreur Webhook:", error);
+    res.status(200).send("Erreur mais endpoint joignable");
+  }
 });
-
 
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
