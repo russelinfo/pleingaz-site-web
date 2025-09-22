@@ -35,7 +35,7 @@ router.post('/initialize', async (req, res) => {
         currency,
         customer: { name, email, phone },
         description: description || 'Paiement PleinGaz',
-        callback: 'http://localhost:5000/api/payments/callback', // tu pourras
+        callback: 'https://pleingaz-site-web.onrender.com/api/payments/callback',
         
         reference: 'pleingaz-' + Date.now(),
       }),
