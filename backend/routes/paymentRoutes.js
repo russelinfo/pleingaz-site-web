@@ -101,35 +101,22 @@ function verifySignature(payload, signature, secret) {
  * Webhook NotchPay
  */
 router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }), // on capte le body brut
+  '/webhook',
+  express.raw({ type: 'application/json' }), // raw JSON ici
   (req, res) => {
-    const signature = req.headers["x-notch-signature"];
-    const payload = req.body.toString(); // body brut
-    const secret = process.env.NOTCHPAY_WEBHOOK_HASH; // ⚠️ défini dans ton .env
+    const signature = req.headers['x-notch-signature']
+    const payload = req.body.toString() // ✅ raw string
+    const secret = process.env.NOTCHPAY_WEBHOOK_HASH
 
-    // Vérification
     if (!verifySignature(payload, signature, secret)) {
-      console.error("❌ Invalid webhook signature");
-      return res.status(403).send("Invalid signature");
+      console.error('❌ Invalid webhook signature')
+      return res.status(403).send('Invalid signature')
     }
 
-    // OK → on parse et on traite
-    const event = JSON.parse(payload);
-    console.log("📩 Webhook validé:", event);
+    const event = JSON.parse(payload)
+    console.log('📩 Webhook validé:', event)
 
-    switch (event.type) {
-      case "payment.complete":
-        console.log("✅ Paiement complété :", event.data);
-        break;
-      case "payment.failed":
-        console.log("❌ Paiement échoué :", event.data);
-        break;
-      default:
-        console.log("ℹ️ Autre événement :", event.type);
-    }
-
-    res.status(200).send("Webhook reçu et validé");
+    res.status(200).send('Webhook reçu et validé')
   }
 );
 
