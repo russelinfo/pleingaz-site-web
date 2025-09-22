@@ -79,13 +79,18 @@ router.get('/verify/:reference', async (req, res) => {
 })
 
 // Webhook NotchPay
-router.post('/webhook', express.json(), (req, res) => {
-  try {
-    const event = req.body || {};
+router.post('/webhook', (req, res) => {
+  let event = {};
 
-    // 👇 Cas où NotchPay teste juste l'endpoint sans data
+  try {
+    // Si c’est bien du JSON, on parse
+    if (req.is('application/json')) {
+      event = req.body;
+    }
+
+    // Cas où NotchPay fait juste un "ping"
     if (!event.type) {
-      console.log("🔎 Webhook test reçu:", event);
+      console.log("🔎 Webhook test reçu (pas d'événement):", event);
       return res.status(200).send("Webhook OK");
     }
 
@@ -105,7 +110,7 @@ router.post('/webhook', express.json(), (req, res) => {
     res.status(200).send("Webhook reçu");
   } catch (error) {
     console.error("Erreur Webhook:", error);
-    res.status(200).send("Erreur mais endpoint joignable"); // 👈 Toujours renvoyer 200
+    res.status(200).send("Erreur mais endpoint joignable"); // toujours renvoyer 200
   }
 });
 
