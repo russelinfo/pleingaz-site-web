@@ -105,7 +105,7 @@ router.get('/verify/:reference', async (req, res) => {
  * Webhook (⚠️ Express RAW obligatoire pour valider la signature)
  */
 router.post(
-  '/webhook',
+  '/webhook/notchpay',
   express.raw({ type: 'application/json' }),
   (req, res) => {
     try {
