@@ -8,25 +8,20 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Middlewares
+// Middleware global
 app.use(cors())
 
-// ⚠️ On applique express.json() seulement aux routes normales
-app.use((req, res, next) => {
-  if (req.originalUrl === '/api/payments/webhook') {
-    next() // on ne parse pas, laisser raw
-  } else {
-    express.json()(req, res, next)
-  }
-})
+// ✅ IMPORTANT: Webhook AVANT express.json()
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
+
+// Puis express.json() pour les autres routes
+app.use(express.json())
 
 // Routes
 app.use('/api/payments', paymentRoutes)
 
-// Health
 app.get('/', (_req, res) => res.send('PleinGaz backend — payments API'))
 
-// Start
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
 })

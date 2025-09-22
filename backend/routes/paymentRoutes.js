@@ -5,9 +5,9 @@ import dotenv from 'dotenv'
 import crypto from 'crypto'
 
 const router = express.Router()
+dotenv.config()
 
 // Initialiser un paiement
-dotenv.config()
 router.post('/initialize', async (req, res) => {
   try {
     const {
@@ -28,7 +28,7 @@ router.post('/initialize', async (req, res) => {
     const response = await fetch('https://api.notchpay.co/payments', {
       method: 'POST',
       headers: {
-        Authorization: process.env.NOTCH_PUBLIC_KEY, // ⚠️ utilise la clé PUBLIQUE
+        Authorization: process.env.NOTCH_PUBLIC_KEY, // ✅ Clé PRIVÉE pour API
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -36,11 +36,18 @@ router.post('/initialize', async (req, res) => {
         currency,
         customer: { name, email, phone },
         description: description || 'Paiement PleinGaz',
-        callback: 'https://pleingaz-site-web.onrender.com/api/payments/callback',
-        
+        callback:
+          'https://pleingaz-site-web.onrender.com/api/payments/callback',
         reference: 'pleingaz-' + Date.now(),
       }),
     })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ NotchPay API Error:', response.status, errorText)
+      return res.status(response.status).json({ error: 'Erreur API NotchPay' })
+    }
+
     const data = await response.json()
     console.log('✅ NotchPay response:', data)
 
@@ -62,10 +69,18 @@ router.get('/verify/:reference', async (req, res) => {
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: process.env.NOTCH_PUBLIC_KEY, // toujours clé PUBLIQUE
+          Authorization: process.env.NOTCH_PUBLIC_KEY, // ✅ Clé PRIVÉE pour API
         },
       }
     )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ NotchPay Verify Error:', response.status, errorText)
+      return res
+        .status(response.status)
+        .json({ error: 'Erreur vérification NotchPay' })
+    }
 
     const data = await response.json()
     console.log('✅ Payment verification:', data)
@@ -79,47 +94,78 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-
 /**
  * Vérification de la signature NotchPay
  */
 function verifySignature(payload, signature, secret) {
-  const hmac = crypto.createHmac("sha256", secret);
-  const calculatedSignature = hmac.update(payload).digest("hex");
+  if (!payload || !signature || !secret) {
+    console.error('❌ Missing webhook verification data')
+    return false
+  }
 
   try {
+    const hmac = crypto.createHmac('sha256', secret)
+    const calculatedSignature = hmac.update(payload, 'utf8').digest('hex')
+
+    console.log('🔍 Webhook verification:')
+    console.log('- Received signature:', signature)
+    console.log('- Calculated signature:', calculatedSignature)
+    console.log('- Secret used:', secret.substring(0, 10) + '...')
+
     return crypto.timingSafeEqual(
-      Buffer.from(calculatedSignature, "hex"),
-      Buffer.from(signature, "hex")
-    );
-  } catch {
-    return false;
+      Buffer.from(calculatedSignature, 'hex'),
+      Buffer.from(signature, 'hex')
+    )
+  } catch (error) {
+    console.error('❌ Signature verification error:', error)
+    return false
   }
 }
 
 /**
- * Webhook NotchPay
+ * ✅ Webhook NotchPay - PAS de middleware ici car déjà appliqué dans server.js
  */
-router.post(
-  '/webhook',
-  express.raw({ type: 'application/json' }), // raw JSON ici
-  (req, res) => {
+router.post('/webhook', (req, res) => {
+  console.log('📨 Webhook reçu')
+  console.log('- Headers:', req.headers)
+  console.log('- Body type:', typeof req.body)
+  console.log('- Body length:', req.body ? req.body.length : 0)
+
+  try {
     const signature = req.headers['x-notch-signature']
-    const payload = req.body.toString() // ✅ raw string
+    const payload = req.body.toString('utf8') // ✅ Buffer vers string
     const secret = process.env.NOTCHPAY_WEBHOOK_HASH
 
+    if (!signature) {
+      console.error('❌ Pas de signature dans les headers')
+      return res.status(400).send('Missing signature')
+    }
+
     if (!verifySignature(payload, signature, secret)) {
-      console.error('❌ Invalid webhook signature')
+      console.error('❌ Signature webhook invalide')
       return res.status(403).send('Invalid signature')
     }
 
     const event = JSON.parse(payload)
-    console.log('📩 Webhook validé:', event)
+    console.log('✅ Webhook validé:', event)
 
-    res.status(200).send('Webhook reçu et validé')
+    // Traiter l'événement selon son type
+    if (event.event && event.data) {
+      console.log(`📩 Événement: ${event.event}`)
+      console.log(`📊 Données:`, event.data)
+
+      // Ajouter ici votre logique métier
+      // Par exemple: mettre à jour BDD, envoyer email, etc.
+    }
+
+    res.status(200).send('Webhook processed successfully')
+  } catch (error) {
+    console.error('❌ Webhook processing error:', error)
+    res.status(500).send('Webhook processing failed')
   }
-);
+})
 
+// Callback pour redirection après paiement (optionnel)
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
 
@@ -128,25 +174,23 @@ router.get('/callback', async (req, res) => {
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
+          Authorization: process.env.NOTCH_PUBLIC_KEY, // ✅ Clé PRIVÉE
           'Content-Type': 'application/json',
         },
       }
     )
 
-    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`)
+    }
 
-    // 🔎 Affiche dans ta console ce que NotchPay renvoie
+    const data = await response.json()
     console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
     if (data.transaction && data.transaction.status === 'complete') {
       res.send('✅ Payment successful!')
     } else {
       res.send('⚠️ Payment not completed.')
-      console.log(
-        'Valeur de la clé privée chargée :',
-        process.env.NOTCH_PUBLIC_KEY
-      )
     }
   } catch (error) {
     console.error('❌ Error verifying payment:', error)
