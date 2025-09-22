@@ -38,7 +38,6 @@ router.post('/initialize', async (req, res) => {
         description: description || 'Paiement PleinGaz',
         callback:
           'https://pleingaz-site-web.onrender.com/api/payments/callback',
-        // callback: 'http://localhost:5000/api/payments/callback',
         reference: 'pleingaz-' + Date.now(),
       }),
     })
@@ -120,7 +119,7 @@ function verifyWebhookSignature(payload, signature, hash) {
 }
 
 /**
- * ✅ Webhook NotchPay - EXACTEMENT selon la documentation
+ * ✅ Webhook NotchPay - Format de réponse correct pour éviter l'erreur 422
  */
 router.post('/webhook', (req, res) => {
   console.log('📨 Webhook NotchPay reçu')
@@ -129,75 +128,103 @@ router.post('/webhook', (req, res) => {
   console.log('- Raw Body available:', !!req.rawBody)
 
   try {
-    // ✅ Utilise JSON.stringify(req.body) comme dans la doc officielle
-    const payload = req.rawBody || JSON.stringify(req.body)
     const signature = req.headers['x-notch-signature']
     const hash = process.env.NOTCHPAY_WEBHOOK_HASH
     const userAgent = req.headers['user-agent']
 
     console.log('📋 Webhook data:')
-    console.log('- Payload:', payload)
     console.log('- Signature:', signature)
     console.log('- User-Agent:', userAgent)
 
-    // ✅ Gérer les tests de vérification NotchPay (sans signature)
+    // ✅ SOLUTION: Test de vérification NotchPay - Réponse JSON structurée
     if (userAgent === 'Notch-Webhook-Verification/1.0' && !signature) {
-      console.log('🧪 Test de vérification NotchPay - Endpoint validé')
-      return res.status(200).send('Webhook endpoint verified')
+      console.log('🧪 Test de vérification NotchPay détecté')
+
+      // ✅ Réponse au format JSON que NotchPay attend
+      return res.status(200).json({
+        status: 'success',
+        message: 'Webhook endpoint verified successfully',
+        code: 200,
+      })
     }
 
-    // ✅ Vérifier la signature pour les vrais webhooks
-    if (!signature) {
-      console.error('❌ Missing x-notch-signature header')
-      return res.status(403).send('Missing signature')
-    }
+    // ✅ Pour les vrais webhooks avec signature
+    if (signature) {
+      const payload = req.rawBody || JSON.stringify(req.body)
 
-    if (!hash) {
-      console.error('❌ NOTCHPAY_WEBHOOK_HASH not configured')
-      return res.status(500).send('Webhook hash not configured')
-    }
-
-    // ✅ Vérification signature selon doc officielle
-    if (!verifyWebhookSignature(payload, signature, hash)) {
-      console.error('❌ Invalid webhook signature')
-      return res.status(403).send('Invalid signature')
-    }
-
-    // ✅ Traitement du webhook validé
-    const event = req.body // Déjà parsé par express.json()
-    console.log('✅ Webhook signature validée!')
-    console.log('📨 Événement reçu:', JSON.stringify(event, null, 2))
-
-    // ✅ Traiter selon le type d'événement
-    if (event.event && event.data) {
-      console.log(`📩 Type d'événement: ${event.event}`)
-      console.log(`📊 Données:`, event.data)
-
-      switch (event.event) {
-        case 'payment.complete':
-          console.log('💰 Paiement complété:', event.data.reference)
-          // Ici: mettre à jour votre BDD, envoyer confirmation, etc.
-          break
-
-        case 'payment.failed':
-          console.log('❌ Paiement échoué:', event.data.reference)
-          // Ici: traiter l'échec du paiement
-          break
-
-        case 'payment.pending':
-          console.log('⏳ Paiement en attente:', event.data.reference)
-          break
-
-        default:
-          console.log(`📋 Événement non traité: ${event.event}`)
+      if (!hash) {
+        console.error('❌ NOTCHPAY_WEBHOOK_HASH not configured')
+        return res.status(500).json({
+          status: 'error',
+          message: 'Webhook hash not configured',
+          code: 500,
+        })
       }
+
+      // ✅ Vérification signature
+      if (!verifyWebhookSignature(payload, signature, hash)) {
+        console.error('❌ Invalid webhook signature')
+        return res.status(403).json({
+          status: 'error',
+          message: 'Invalid signature',
+          code: 403,
+        })
+      }
+
+      // ✅ Traitement du webhook validé
+      const event = req.body
+      console.log('✅ Webhook signature validée!')
+      console.log('📨 Événement reçu:', JSON.stringify(event, null, 2))
+
+      // ✅ Traiter selon le type d'événement
+      if (event.event && event.data) {
+        console.log(`📩 Type d'événement: ${event.event}`)
+        console.log(`📊 Données:`, event.data)
+
+        switch (event.event) {
+          case 'payment.complete':
+            console.log('💰 Paiement complété:', event.data.reference)
+            break
+
+          case 'payment.failed':
+            console.log('❌ Paiement échoué:', event.data.reference)
+            break
+
+          case 'payment.pending':
+            console.log('⏳ Paiement en attente:', event.data.reference)
+            break
+
+          default:
+            console.log(`📋 Événement non traité: ${event.event}`)
+        }
+      }
+
+      // ✅ Réponse JSON structurée pour les vrais webhooks
+      return res.status(200).json({
+        status: 'success',
+        message: 'Webhook processed successfully',
+        code: 200,
+        processed_event: event.event || 'unknown',
+      })
     }
 
-    // ✅ Réponse de succès
-    res.status(200).send('Webhook processed successfully')
+    // ✅ Cas par défaut - pas de signature
+    console.log('❌ No signature found, treating as verification test')
+    return res.status(200).json({
+      status: 'success',
+      message: 'Endpoint ready to receive webhooks',
+      code: 200,
+    })
   } catch (error) {
     console.error('❌ Webhook processing error:', error)
-    res.status(500).send('Webhook processing failed')
+
+    // ✅ Réponse d'erreur au format JSON
+    return res.status(500).json({
+      status: 'error',
+      message: 'Webhook processing failed',
+      code: 500,
+      error: error.message,
+    })
   }
 })
 
