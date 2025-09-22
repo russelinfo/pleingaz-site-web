@@ -36,7 +36,9 @@ router.post('/initialize', async (req, res) => {
         currency,
         customer: { name, email, phone },
         description: description || 'Paiement PleinGaz',
-        callback: 'https://pleingaz-site-web.onrender.com/api/payments/callback',
+        // callback:
+        //   'https://pleingaz-site-web.onrender.com/api/payments/callback',
+        callback: 'http://localhost:5000/api/payments/callback',
         reference: 'pleingaz-' + Date.now(),
       }),
     })
@@ -94,26 +96,22 @@ router.get('/verify/:reference', async (req, res) => {
 })
 
 /**
- * Vérification de la signature NotchPay
+ * ✅ Vérification signature selon documentation officielle NotchPay
  */
-function verifySignature(payload, signature, secret) {
-  if (!payload || !signature || !secret) {
-    console.error('❌ Missing webhook verification data')
-    return false
-  }
-
+function verifyWebhookSignature(payload, signature, hash) {
   try {
-    const hmac = crypto.createHmac('sha256', secret)
-    const calculatedSignature = hmac.update(payload, 'utf8').digest('hex')
+    const hmac = crypto.createHmac('sha256', hash)
+    const expectedSignature = hmac.update(payload).digest('hex')
 
-    console.log('🔍 Webhook verification:')
+    console.log('🔍 Webhook verification (Documentation officielle):')
+    console.log('- Payload length:', payload.length)
     console.log('- Received signature:', signature)
-    console.log('- Calculated signature:', calculatedSignature)
-    console.log('- Secret used:', secret.substring(0, 10) + '...')
+    console.log('- Expected signature:', expectedSignature)
+    console.log('- Hash used:', hash.substring(0, 15) + '...')
 
     return crypto.timingSafeEqual(
-      Buffer.from(calculatedSignature, 'hex'),
-      Buffer.from(signature, 'hex')
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
     )
   } catch (error) {
     console.error('❌ Signature verification error:', error)
@@ -122,41 +120,80 @@ function verifySignature(payload, signature, secret) {
 }
 
 /**
- * ✅ Webhook NotchPay - PAS de middleware ici car déjà appliqué dans server.js
+ * ✅ Webhook NotchPay - EXACTEMENT selon la documentation
  */
 router.post('/webhook', (req, res) => {
-  console.log('📨 Webhook reçu')
-  console.log('- Headers:', req.headers)
-  console.log('- Body type:', typeof req.body)
-  console.log('- Body length:', req.body ? req.body.length : 0)
+  console.log('📨 Webhook NotchPay reçu')
+  console.log('- Headers:', JSON.stringify(req.headers, null, 2))
+  console.log('- Body:', JSON.stringify(req.body, null, 2))
+  console.log('- Raw Body available:', !!req.rawBody)
 
   try {
+    // ✅ Utilise JSON.stringify(req.body) comme dans la doc officielle
+    const payload = req.rawBody || JSON.stringify(req.body)
     const signature = req.headers['x-notch-signature']
-    const payload = req.body.toString('utf8') // ✅ Buffer vers string
-    const secret = process.env.NOTCHPAY_WEBHOOK_HASH
+    const hash = process.env.NOTCHPAY_WEBHOOK_HASH
+    const userAgent = req.headers['user-agent']
 
-    if (!signature) {
-      console.error('❌ Pas de signature dans les headers')
-      return res.status(400).send('Missing signature')
+    console.log('📋 Webhook data:')
+    console.log('- Payload:', payload)
+    console.log('- Signature:', signature)
+    console.log('- User-Agent:', userAgent)
+
+    // ✅ Gérer les tests de vérification NotchPay (sans signature)
+    if (userAgent === 'Notch-Webhook-Verification/1.0' && !signature) {
+      console.log('🧪 Test de vérification NotchPay - Endpoint validé')
+      return res.status(200).send('Webhook endpoint verified')
     }
 
-    if (!verifySignature(payload, signature, secret)) {
-      console.error('❌ Signature webhook invalide')
+    // ✅ Vérifier la signature pour les vrais webhooks
+    if (!signature) {
+      console.error('❌ Missing x-notch-signature header')
+      return res.status(403).send('Missing signature')
+    }
+
+    if (!hash) {
+      console.error('❌ NOTCHPAY_WEBHOOK_HASH not configured')
+      return res.status(500).send('Webhook hash not configured')
+    }
+
+    // ✅ Vérification signature selon doc officielle
+    if (!verifyWebhookSignature(payload, signature, hash)) {
+      console.error('❌ Invalid webhook signature')
       return res.status(403).send('Invalid signature')
     }
 
-    const event = JSON.parse(payload)
-    console.log('✅ Webhook validé:', event)
+    // ✅ Traitement du webhook validé
+    const event = req.body // Déjà parsé par express.json()
+    console.log('✅ Webhook signature validée!')
+    console.log('📨 Événement reçu:', JSON.stringify(event, null, 2))
 
-    // Traiter l'événement selon son type
+    // ✅ Traiter selon le type d'événement
     if (event.event && event.data) {
-      console.log(`📩 Événement: ${event.event}`)
+      console.log(`📩 Type d'événement: ${event.event}`)
       console.log(`📊 Données:`, event.data)
 
-      // Ajouter ici votre logique métier
-      // Par exemple: mettre à jour BDD, envoyer email, etc.
+      switch (event.event) {
+        case 'payment.complete':
+          console.log('💰 Paiement complété:', event.data.reference)
+          // Ici: mettre à jour votre BDD, envoyer confirmation, etc.
+          break
+
+        case 'payment.failed':
+          console.log('❌ Paiement échoué:', event.data.reference)
+          // Ici: traiter l'échec du paiement
+          break
+
+        case 'payment.pending':
+          console.log('⏳ Paiement en attente:', event.data.reference)
+          break
+
+        default:
+          console.log(`📋 Événement non traité: ${event.event}`)
+      }
     }
 
+    // ✅ Réponse de succès
     res.status(200).send('Webhook processed successfully')
   } catch (error) {
     console.error('❌ Webhook processing error:', error)
@@ -167,6 +204,10 @@ router.post('/webhook', (req, res) => {
 // Callback pour redirection après paiement (optionnel)
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
+
+  if (!reference) {
+    return res.status(400).send('Missing reference parameter')
+  }
 
   try {
     const response = await fetch(
@@ -187,13 +228,24 @@ router.get('/callback', async (req, res) => {
     console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
     if (data.transaction && data.transaction.status === 'complete') {
-      res.send('✅ Payment successful!')
+      res.send(`
+        <h1>✅ Paiement réussi!</h1>
+        <p>Référence: ${reference}</p>
+        <p>Merci pour votre achat.</p>
+      `)
     } else {
-      res.send('⚠️ Payment not completed.')
+      res.send(`
+        <h1>⚠️ Paiement en cours</h1>
+        <p>Référence: ${reference}</p>
+        <p>Status: ${data.transaction?.status || 'unknown'}</p>
+      `)
     }
   } catch (error) {
     console.error('❌ Error verifying payment:', error)
-    res.status(500).send('Error verifying payment')
+    res.status(500).send(`
+      <h1>❌ Erreur de vérification</h1>
+      <p>Une erreur s'est produite lors de la vérification du paiement.</p>
+    `)
   }
 })
 

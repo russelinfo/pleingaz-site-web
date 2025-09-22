@@ -11,10 +11,17 @@ const PORT = process.env.PORT || 5000
 // Middleware global
 app.use(cors())
 
-// ✅ IMPORTANT: Webhook AVANT express.json()
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
+// ✅ Pour le webhook, on garde express.json() mais on récupère le raw body
+app.use(
+  '/api/payments/webhook',
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString('utf8') // ✅ Stocke le raw body comme string
+    },
+  })
+)
 
-// Puis express.json() pour les autres routes
+// express.json() pour les autres routes
 app.use(express.json())
 
 // Routes
