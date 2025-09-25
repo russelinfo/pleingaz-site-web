@@ -4,7 +4,7 @@ const products = [
   {
    id : "prod01",
     name: 'Bouteille de gaz 6 kg',
-    image: './images/btn6.png',
+    image: 'btn6.png',
     description:
       'Bouteille en acier robuste, livrée pleine de 6 kg de GPL. Idéale pour petites familles et usages occasionnels. Cette bouteille à valve est facile à transporter et à utiliser pour tous vos besoins en cuisson et chauffage.',
     shortDescription:
@@ -22,7 +22,7 @@ const products = [
   {
    id : "prod02",
     name: 'Bouteille de gaz 12,5 kg',
-    image: './images/btn12.5.png',
+    image: 'btn12.5.png',
     description:
       'Bouteille robuste contenant 12,5 kg de GPL. Adaptée aux besoins domestiques réguliers, elle offre une autonomie prolongée pour la cuisine et les appareils domestiques.',
     shortDescription: 'Bouteille robuste contenant 12,5 kg de GPL.',
@@ -39,7 +39,7 @@ const products = [
   {
    id : "prod03",
     name: 'Bouteille de gaz 50 kg',
-    image: './images/btn50.png',
+    image: 'btn50.png',
     description:
       'Grande bouteille de 50 kg pour usages intensifs. Idéale pour restaurants, hôtels et industries. Son robinet de haute sécurité garantit une utilisation sans risque pour les professionnels.',
     shortDescription: 'Grande bouteille de 50 kg pour usages intensifs.',
@@ -56,7 +56,7 @@ const products = [
   {
    id : "prod04",
     name: 'Plaque à gaz en verre',
-    image: './images/vitrer.png',
+    image: 'vitrer.png',
     description:
       'Table de cuisson PLEINGAZ moderne en verre trempé. Élégante, résistante à la chaleur et facile à nettoyer, elle s’intègre parfaitement dans les cuisines contemporaines.',
     shortDescription: 'Table de cuisson moderne en verre trempé.',
@@ -72,7 +72,7 @@ const products = [
   {
    id : "prod05",
     name: 'Plaque à gaz en acier',
-    image: './images/classic.png',
+    image: 'classic.png',
     description:
       'Table de cuisson robuste et économique. Adaptée aux usages domestiques quotidiens, sa conception durable en acier la rend résistante et facile d’entretien.',
     shortDescription: 'Table de cuisson robuste et économique.',
@@ -88,7 +88,7 @@ const products = [
   {
    id : "prod06",
     name: 'Détendeur pour bouteille 12,5 kg',
-    image: './images/detenteur.png',
+    image: 'detenteur.png',
     description:
       'Régulateur de pression pour bouteilles 12,5 kg à robinet. Cet accessoire garantit une sécurité et une régulation optimale de votre flux de gaz pour un usage domestique sans souci.',
     shortDescription: 'Régulateur de pression pour bouteilles 12,5 kg.',
@@ -104,7 +104,7 @@ const products = [
   {
    id : "prod07",
     name: 'Détendeur pour bouteille 6 kg',
-    image: './images/detenteur2.png',
+    image: 'detenteur2.png',
     description:
       'Détendeur PLEINGAZ conçu pour bouteilles 6 kg à valve. Simple à visser, sûr et pratique, il est l’accessoire indispensable pour votre petite bouteille',
     shortDescription: 'Détendeur conçu pour bouteilles 6 kg à valve.',
@@ -120,7 +120,7 @@ const products = [
   {
    id : "prod08",
     name: 'Tuyau de gaz',
-    image: './images/tuyo.png',
+    image: 'tuyo.png',
     description:
       'Tuyau pour relier bouteille et appareil. Fabriqué en matériau résistant à la pression, il garantit une alimentation en gaz sûre et durable. (Longueur standard : 1.5 m)',
     shortDescription: 'Tuyau pour relier bouteille et appareil.',
@@ -136,7 +136,7 @@ const products = [
   {
    id : "prod09",
     name: 'Brûleur vissable pour bouteille 6 kg',
-    image: './images/bruleur.png',
+    image: 'bruleur.png',
     description:
       'Brûleur à fixer directement sur la valve de votre bouteille de 6 kg. C’est une solution simple et mobile, idéale pour la cuisson en extérieur, en camping ou pour les petits espaces.',
     shortDescription: 'Brûleur à fixer directement sur la valve.',
