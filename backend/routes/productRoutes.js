@@ -1,6 +1,6 @@
 // routes/productRoutes.js
 import express from 'express'
-import prisma from '../prismaClient.js' // Assurez-vous d'avoir le bon chemin
+import { PrismaClient } from '@prisma/client'
 
 const router = express.Router()
 
