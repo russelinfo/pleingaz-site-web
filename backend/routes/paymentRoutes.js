@@ -1,9 +1,9 @@
-// routes/paymentRoutes.js
+// routes/paymentRoutes.js (code corrigé)
 import express from 'express'
 import fetch from 'node-fetch'
 import crypto from 'crypto'
 import dotenv from 'dotenv'
-import prisma from '../prismaClient.js' // <-- import du client prisma
+import prisma from '../prismaClient.js'
 
 dotenv.config()
 const router = express.Router()
@@ -24,26 +24,48 @@ function verifySignature(payload, signature, secret) {
 }
 
 /** POST /api/payments/initialize
- * body: { amount, currency?, name, email, phone, description? }
+ * body: { amount, currency?, name, email, phone, description?, orderData }
  */
 router.post('/initialize', async (req, res) => {
+  const {
+    amount,
+    currency = 'XAF',
+    name,
+    email,
+    phone,
+    description,
+    orderData,
+  } = req.body
   try {
-    const {
-      amount,
-      currency = 'XAF',
-      name,
-      email,
-      phone,
-      description,
-    } = req.body
-    if (!amount || !email || !phone || !name) {
+    if (!amount || !email || !phone || !name || !orderData) {
       return res
         .status(400)
-        .json({ error: 'amount, name, email et phone sont requis' })
+        .json({ error: 'amount, name, email, phone et orderData sont requis' })
     }
 
-    // 1) créer la transaction en DB (status pending)
-    const reference = 'pleingaz-' + Date.now()
+    // ✅ Étape 1 : Créer la commande dans la base de données
+    const createdOrder = await prisma.order.create({
+      data: {
+        customerName: orderData.customerName,
+        customerEmail: orderData.customerEmail,
+        customerPhone: orderData.customerPhone,
+        deliveryAddress: orderData.deliveryAddress,
+        totalAmount: orderData.totalAmount,
+        paymentMethod: orderData.paymentMethod,
+        status: 'pending_payment', // Nouveau statut pour les paiements en attente
+        items: {
+          create: orderData.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        },
+      },
+    })
+    console.log('✅ Commande créée:', createdOrder.id)
+
+    // ✅ Étape 2 : Créer la transaction liée à la commande
+    const reference = `pleingaz-${createdOrder.id}-${Date.now()}`
     const tx = await prisma.transaction.create({
       data: {
         reference,
@@ -53,10 +75,12 @@ router.post('/initialize', async (req, res) => {
         customerEmail: email,
         customerPhone: phone,
         status: 'pending',
+        orderId: createdOrder.id, // ✅ Lier la transaction à la commande
       },
     })
+    console.log('✅ Transaction créée:', tx.id)
 
-    // 2) Appel NotchPay
+    // ✅ Étape 3 : Appel NotchPay
     const response = await fetch('https://api.notchpay.co/payments', {
       method: 'POST',
       headers: {
@@ -67,24 +91,24 @@ router.post('/initialize', async (req, res) => {
         amount,
         currency,
         customer: { name, email, phone },
-        description: description || 'Paiement PleinGaz',
+        description:
+          description || `Paiement pour commande #${createdOrder.id}`,
         callback:
           process.env.PAYMENT_CALLBACK_URL ||
           'https://pleingaz-site-web.onrender.com/api/payments/callback',
-        reference, // utilise la même reference que la DB
+        reference,
       }),
     })
 
     const data = await response.json()
     console.log('✅ NotchPay response:', data)
 
-    // 3) stocker la réponse NotchPay dans la DB (optionnel)
+    // ✅ Étape 4 : Stocker la réponse NotchPay
     await prisma.transaction.update({
       where: { reference },
       data: { notchData: data },
     })
 
-    // Retourne la réponse NotchPay au front (ex: authorization_url)
     return res.json({ ...data, reference })
   } catch (err) {
     console.error('❌ Payment initialize error:', err)
@@ -94,9 +118,7 @@ router.post('/initialize', async (req, res) => {
   }
 })
 
-/** GET /api/payments/verify/:reference
- * appel direct au service NotchPay pour vérifier l'état
- */
+/** GET /api/payments/verify/:reference */
 router.get('/verify/:reference', async (req, res) => {
   try {
     const { reference } = req.params
@@ -109,17 +131,22 @@ router.get('/verify/:reference', async (req, res) => {
     const data = await response.json()
     console.log('✅ Payment verification:', data)
 
-    // Si complete -> mettre à jour la BD
-    const txRef =
-      data.transaction?.merchant_reference ||
-      data.transaction?.trxref ||
-      data.transaction?.reference ||
-      reference
-    if (data.transaction?.status === 'complete' && txRef) {
-      await prisma.transaction.updateMany({
-        where: { reference: txRef },
+    // Récupérer la transaction pour mettre à jour la commande
+    const transaction = await prisma.transaction.findUnique({
+      where: { reference },
+    })
+
+    if (data.transaction?.status === 'complete' && transaction) {
+      await prisma.transaction.update({
+        where: { reference },
         data: { status: 'complete', notchData: data },
       })
+      if (transaction.orderId) {
+        await prisma.order.update({
+          where: { id: transaction.orderId },
+          data: { status: 'paid' },
+        })
+      }
     }
 
     return res.json(data)
@@ -133,8 +160,6 @@ router.get('/verify/:reference', async (req, res) => {
 
 /**
  * Webhook endpoint (NotchPay)
- * Important: faut accepter body RAW (express.raw) pour vérifier la signature.
- * Route : POST /api/payments/webhook/notchpay
  */
 router.post(
   '/webhook/notchpay',
@@ -145,14 +170,11 @@ router.post(
       const payload = req.body ? req.body.toString('utf8') : ''
       const secret = process.env.NOTCHPAY_WEBHOOK_HASH
 
-      // NotchPay dashboard test: parfois il envoie un ping sans signature.
       if (!signature) {
         console.log('🔎 Webhook test/validation reçu (pas de signature)')
-        // répondre 200 rapidement (NotchPay attends 2xx)
         return res.status(200).send('Webhook endpoint verified')
       }
 
-      // Vérifier la signature
       if (!verifySignature(payload, signature, secret)) {
         console.error('❌ Invalid webhook signature')
         return res.status(403).send('Invalid signature')
@@ -161,7 +183,6 @@ router.post(
       const event = JSON.parse(payload)
       console.log('📩 Webhook validé:', event)
 
-      // récupérer la référence stockée (selon ce que NotchPay envoie)
       const ref =
         event?.data?.merchant_reference ||
         event?.data?.trxref ||
@@ -169,24 +190,40 @@ router.post(
         event?.data?.trxRef
 
       if (event.type === 'payment.complete' && ref) {
-        await prisma.transaction.updateMany({
+        const transaction = await prisma.transaction.update({
           where: { reference: ref },
           data: { status: 'complete', notchData: event },
         })
         console.log('✅ Transaction mise à jour en complete pour', ref)
+        if (transaction.orderId) {
+          await prisma.order.update({
+            where: { id: transaction.orderId },
+            data: { status: 'paid' },
+          })
+          console.log(
+            `✅ Statut de la commande ${transaction.orderId} mis à jour en 'paid'.`
+          )
+        }
       } else if (event.type === 'payment.failed' && ref) {
-        await prisma.transaction.updateMany({
+        const transaction = await prisma.transaction.update({
           where: { reference: ref },
           data: { status: 'failed', notchData: event },
         })
         console.log('❌ Transaction mise à jour en failed pour', ref)
+        if (transaction.orderId) {
+          await prisma.order.update({
+            where: { id: transaction.orderId },
+            data: { status: 'failed_payment' },
+          })
+          console.log(
+            `❌ Statut de la commande ${transaction.orderId} mis à jour en 'failed_payment'.`
+          )
+        }
       }
 
-      // Ack
       return res.status(200).send('Webhook reçu et validé')
     } catch (error) {
       console.error('Erreur Webhook:', error)
-      // Toujours répondre 200 ou 500 selon ta stratégie ; NotchPay attend 2xx normalement.
       return res.status(500).send('Erreur serveur')
     }
   }
@@ -208,20 +245,49 @@ router.get('/callback', async (req, res) => {
     const data = await response.json()
     console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
-    // Si complete -> mettre à jour la DB
     const txRef =
       data.transaction?.merchant_reference ||
       data.transaction?.trxref ||
       data.transaction?.reference ||
       reference
-    if (data.transaction?.status === 'complete' && txRef) {
-      await prisma.transaction.updateMany({
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { reference: txRef },
+    })
+
+    if (data.transaction?.status === 'complete' && transaction) {
+      // ✅ Mise à jour de la transaction et de la commande
+      await prisma.transaction.update({
         where: { reference: txRef },
         data: { status: 'complete', notchData: data },
       })
-      return res.send('✅ Payment successful!')
+      if (transaction.orderId) {
+        await prisma.order.update({
+          where: { id: transaction.orderId },
+          data: { status: 'paid' },
+        })
+      }
+      return res.send(`
+        <div style="font-family: sans-serif; text-align: center; padding: 40px; background-color: #f7f7f7;">
+          <h1 style="color: #4CAF50;">✅ Paiement réussi !</h1>
+          <p style="font-size: 18px; color: #555;">Votre commande a été validée. Vous serez redirigé sous peu.</p>
+          <p style="font-size: 14px; color: #888;">Référence: ${txRef}</p>
+          <script>
+            setTimeout(() => {
+              window.location.href = 'https://pleingaz-site-web.onrender.com/order-confirmation?ref=${txRef}';
+            }, 3000);
+          </script>
+        </div>
+      `)
     } else {
-      return res.send('⚠️ Payment not completed.')
+      return res.send(`
+        <div style="font-family: sans-serif; text-align: center; padding: 40px; background-color: #fff8f8;">
+          <h1 style="color: #F44336;">⚠️ Échec du paiement.</h1>
+          <p style="font-size: 18px; color: #555;">Votre paiement n'a pas pu être complété. Veuillez réessayer.</p>
+          <p style="font-size: 14px; color: #888;">Référence: ${txRef}</p>
+          <a href="https://pleingaz-site-web.onrender.com/cart" style="display: inline-block; margin-top: 20px; padding: 10px 20px; color: white; background-color: #F44336; border-radius: 5px; text-decoration: none;">Retour au panier</a>
+        </div>
+      `)
     }
   } catch (error) {
     console.error('❌ Error verifying payment:', error)

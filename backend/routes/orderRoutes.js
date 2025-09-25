@@ -62,5 +62,49 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
+// Nouvelle route pour récupérer les détails de la commande via la référence de transaction
+router.get('/by-transaction/:reference', async (req, res) => {
+  const { reference } = req.params
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { reference },
+      include: { order: { include: { items: { include: { product: true } } } } },
+    })
+
+    if (!transaction || !transaction.order) {
+      return res.status(404).json({ error: 'Commande non trouvée pour cette transaction' })
+    }
+
+    const order = transaction.order
+    
+    // Remap les items pour inclure les détails du produit
+    const remappedItems = order.items.map(item => ({
+      ...item,
+      name: item.product.name,
+      image: item.product.image,
+      isGasBottle: item.product.isGasBottle,
+      price: item.unitPrice,
+    }));
+    
+    // Format des données pour correspondre à ce que le front attend
+    const formattedOrder = {
+      orderNumber: order.id,
+      totalAmount: order.totalAmount,
+      deliveryDate: order.deliveryDate,
+      deliveryAddress: order.deliveryAddress,
+      paymentMethod: order.paymentMethod,
+      items: remappedItems,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+    };
+    
+    res.json(formattedOrder)
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la commande via la référence:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 
 export default router
