@@ -3,6 +3,7 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import paymentRoutes from './routes/paymentRoutes.js'
+import productRoutes from './routes/productRoutes.js'
 
 dotenv.config()
 const app = express()
@@ -14,6 +15,10 @@ app.use(express.json()) // ✅ classique pour toutes les routes JSON
 
 // Routes
 app.use('/api/payments', paymentRoutes)
+
+app.use('/api/products', productRoutes)
+
+// Route racine pour vérifier que le serveur fonctionne
 
 app.get('/', (_req, res) => res.send('PleinGaz backend — payments API'))
 
