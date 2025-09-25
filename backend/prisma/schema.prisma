@@ -71,11 +71,13 @@ model Transaction {
   status        String
   amount        Int
   currency      String   @default("XAF")
-  customerName  String?   // ✅ optionnel
-  customerEmail String?   // ✅ optionnel
-  customerPhone String?   // ✅ optionnel
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  notchData     Json?                // ✅ nouveau champ JSON
   createdAt     DateTime @default(now())
 
   orderId Int?
   order   Order? @relation(fields: [orderId], references: [id])
 }
+
