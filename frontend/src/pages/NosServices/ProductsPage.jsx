@@ -1,10 +1,10 @@
 // src/pages/nos service/ProductsPage.jsx
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react' // AJOUT DE useEffect
 import { motion } from 'framer-motion'
 import { Search, ShoppingCart, Plus, Minus, Eye, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useNavigate } from 'react-router-dom'
-import products from '../../data/products'
+// SUPPRESSION: import products from '../../data/products'
 import { useTranslation } from 'react-i18next'
 
 const ProductsPage = () => {
@@ -12,9 +12,56 @@ const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
   const navigate = useNavigate()
-
   const [selectedPrices, setSelectedPrices] = useState({})
 
+  // NOUVEL ÉTAT POUR GÉRER LES DONNÉES DE L'API, LE CHARGEMENT ET LES ERREURS
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // HOOK POUR FAIRE L'APPEL API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/products'
+        )
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`)
+        }
+        const data = await response.json()
+        setProducts(data) // Met à jour l'état avec les données du backend
+      } catch (err) {
+        console.error('Erreur lors de la récupération des produits:', err)
+        setError(
+          'Impossible de récupérer les produits. Veuillez réessayer plus tard.'
+        )
+      } finally {
+        setLoading(false) // Le chargement est terminé
+      }
+    }
+
+    fetchProducts()
+  }, []) // Le tableau vide [] s'assure que cet effet ne s'exécute qu'une seule fois au chargement du composant
+
+  // GESTION DU CHARGEMENT ET DES ERREURS
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen text-gray-700'>
+        Chargement des produits...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className='flex items-center justify-center min-h-screen text-red-500'>
+        {error}
+      </div>
+    )
+  }
+
+  // MODIFIÉ: Le filtre utilise maintenant la variable `products` de l'état
   const filteredProducts = products.filter((product) =>
     t(product.name).toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -56,14 +103,12 @@ const ProductsPage = () => {
         return
       }
     } else {
-      priceValue = getPriceValue(product.price) // Use helper here
+      priceValue = getPriceValue(product.price)
     }
 
-    // Check if item exists and update quantity, otherwise add new item
     if (cart[cartId] && cart[cartId].quantity > 0) {
-      handleUpdateCart(cartId, 1) // Increment quantity
+      handleUpdateCart(cartId, 1)
     } else {
-      // Add new item to cart
       addToCart({ ...product, price: priceValue }, priceType)
     }
   }
@@ -123,7 +168,7 @@ const ProductsPage = () => {
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
           {filteredProducts.map((product) => {
             const cartId = getCartId(product)
-            const itemInCart = cart[cartId] // Get the item from cart using its unique cartId
+            const itemInCart = cart[cartId]
 
             return (
               <motion.div
@@ -200,10 +245,8 @@ const ProductsPage = () => {
                     {product.inStock ? (
                       <>
                         <div className='flex items-center space-x-2'>
-                          {/* Affiche le bouton "Ajouter au panier" si le produit n'est pas dans le panier, sinon affiche les boutons +/- et la quantité */}
                           {(itemInCart?.quantity || 0) > 0 ? (
                             <>
-                              {/* Bouton pour retirer */}
                               <button
                                 onClick={() => {
                                   if (
@@ -223,13 +266,9 @@ const ProductsPage = () => {
                               >
                                 <Minus size={16} />
                               </button>
-
-                              {/* Affichage de la quantité */}
                               <span className='font-bold w-6 text-center text-xl'>
                                 {itemInCart.quantity}
                               </span>
-
-                              {/* Bouton pour ajouter (incrémenter) */}
                               <button
                                 onClick={() => {
                                   if (
@@ -251,7 +290,6 @@ const ProductsPage = () => {
                               </button>
                             </>
                           ) : (
-                            // Bouton "Ajouter au panier"
                             <button
                               onClick={() => {
                                 if (
