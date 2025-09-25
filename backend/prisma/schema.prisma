@@ -66,12 +66,16 @@ model OrderItem {
 //   TABLE : Transaction
 // =====================
 model Transaction {
-  id        Int      @id @default(autoincrement())
-  reference String   @unique
-  status    String
-  amount    Int
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  reference     String   @unique
+  status        String
+  amount        Int
+  currency      String   @default("XAF")
+  customerName  String?   // ✅ optionnel
+  customerEmail String?   // ✅ optionnel
+  customerPhone String?   // ✅ optionnel
+  createdAt     DateTime @default(now())
 
-  orderId   Int?
-  order     Order? @relation(fields: [orderId], references: [id])
+  orderId Int?
+  order   Order? @relation(fields: [orderId], references: [id])
 }
