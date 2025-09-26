@@ -119,73 +119,128 @@ const CartPage = () => {
   }
 
   // ✅ Validation de la commande (envoi backend)
-  
-const handleValidateOrder = async () => {
-  // ... (votre validation existante)
 
-  try {
-    if (paymentMethod === 'Paiement à la livraison') {
-      // Logique existante pour paiement à la livraison
-      // ...
-    } else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
-      // ✅ Étape 1 : Créer la commande sur le backend d'abord
-      const orderResponse = await fetch(
-        'https://pleingaz-site-web.onrender.com/api/orders',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderPayload),
-        }
-      )
+  // src/components/CartPage.jsx
+  // ... (imports et autres codes non modifiés)
 
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json()
-        throw new Error(
-          errorData.error ||
-            `Erreur HTTP ${orderResponse.status} lors de la création de la commande.`
-        )
-      }
-      const orderData = await orderResponse.json()
-      const orderId = orderData.id
-
-      // ✅ Étape 2 : Initialiser le paiement avec le bon ID de commande
-      const paymentPayload = {
-        amount: calculateTotal(),
-        phone: customerPhone,
-        email: customerEmail,
-        orderId: orderId, // Utilisez l'ID de commande réel
-      }
-
-      const paymentResponse = await fetch(
-        'https://pleingaz-site-web.onrender.com/api/payments/initialize',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentPayload),
-        }
-      )
-
-      if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json()
-        throw new Error(
-          errorData.message ||
-            `Erreur HTTP ${paymentResponse.status} lors de l'initialisation du paiement.`
-        )
-      }
-      const paymentData = await paymentResponse.json()
-      console.log('✅ Payment initialized, redirecting...', paymentData)
-
-      if (paymentData.authorization_url) {
-        window.location.href = paymentData.authorization_url
-      } else {
-        alert("Erreur: L'URL de redirection de paiement est manquante.")
-      }
+  const handleValidateOrder = async () => {
+    if (cartItems.length === 0) {
+      alert(t('Votre panier est vide. Veuillez ajouter des articles.'))
+      return
     }
-  } catch (err) {
-    console.error('❌ Erreur commande/paiement:', err)
-    alert(`Erreur: ${err.message}`)
+    if (!customerName || !customerEmail || !customerPhone) {
+      alert(t('Veuillez remplir vos informations personnelles.'))
+      return
+    }
+    if (!deliveryDate || !deliveryAddress) {
+      alert(t("Veuillez remplir la date et l'adresse de livraison."))
+      return
+    }
+
+    // ✅ Déclaration de l'objet de la commande ici pour qu'il soit accessible partout
+    const orderPayload = {
+      customerName,
+      customerEmail,
+      customerPhone,
+      deliveryAddress,
+      deliveryDate,
+      paymentMethod,
+      items: cartItems.map((item) => ({
+        productId: item.id.split('-')[0],
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
+      totalAmount: calculateTotal(),
+    }
+
+    try {
+      if (paymentMethod === 'Paiement à la livraison') {
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
+        )
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
+        const data = await response.json()
+
+        const confirmationDetails = {
+          orderNumber: data.orderNumber || data.id,
+          totalAmount: calculateTotal(),
+          deliveryDate,
+          deliveryAddress,
+          paymentMethod,
+          items: cartItems,
+          customerName,
+          customerEmail,
+          customerPhone,
+        }
+        navigate('/order-confirmation', {
+          state: { orderDetails: confirmationDetails },
+        })
+      } else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
+        // ✅ Étape 1 : Créer la commande sur le backend d'abord
+        const orderResponse = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
+        )
+
+        if (!orderResponse.ok) {
+          const errorData = await orderResponse.json()
+          throw new Error(
+            errorData.error ||
+              `Erreur HTTP ${orderResponse.status} lors de la création de la commande.`
+          )
+        }
+        const orderData = await orderResponse.json()
+        const orderId = orderData.id
+
+        // ✅ Étape 2 : Initialiser le paiement avec le bon ID de commande
+        const paymentPayload = {
+          amount: calculateTotal(),
+          phone: customerPhone,
+          email: customerEmail,
+          orderId: orderId, // Utilisez l'ID de commande réel
+        }
+
+        const paymentResponse = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/payments/initialize',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentPayload),
+          }
+        )
+
+        if (!paymentResponse.ok) {
+          const errorData = await paymentResponse.json()
+          throw new Error(
+            errorData.message ||
+              `Erreur HTTP ${paymentResponse.status} lors de l'initialisation du paiement.`
+          )
+        }
+        const paymentData = await paymentResponse.json()
+        console.log('✅ Payment initialized, redirecting...', paymentData)
+
+        if (paymentData.authorization_url) {
+          window.location.href = paymentData.authorization_url
+        } else {
+          alert("Erreur: L'URL de redirection de paiement est manquante.")
+        }
+      }
+    } catch (err) {
+      console.error('❌ Erreur commande/paiement:', err)
+      alert(`Erreur: ${err.message}`)
+    }
   }
-}
+
+  // ... (le reste du composant n'est pas modifié)
 
   const getTomorrowDate = () => {
     const today = new Date()
