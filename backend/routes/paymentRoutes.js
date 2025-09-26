@@ -9,9 +9,9 @@ dotenv.config()
 const router = express.Router()
 
 /** helper signature verify (HMAC SHA256) */
-function verifySignature(payload, signature, PUBLIC) {
-  if (!signature || !PUBLIC) return false
-  const hmac = crypto.createHmac('sha256', PUBLIC)
+function verifySignature(payload, signature, secret) {
+  if (!signature || !secret) return false
+  const hmac = crypto.createHmac('sha256', secret)
   const expected = hmac.update(payload).digest('hex')
   try {
     return crypto.timingSafeEqual(
@@ -51,8 +51,7 @@ router.post('/initialize', async (req, res) => {
       {
         method: 'POST',
         headers: {
-          // ✅ Ajustement: La clé secrète est nécessaire pour l'initialisation
-          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
+          Authorization: `Bearer ${process.env.NOTCH_SECRET_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -81,12 +80,10 @@ router.post('/initialize', async (req, res) => {
         "Échec de l'initialisation de NotchPay avec l'erreur:",
         notchPayData.message
       )
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Échec de l'initialisation de NotchPay.",
-        })
+      res.status(500).json({
+        success: false,
+        message: "Échec de l'initialisation de NotchPay.",
+      })
     }
   } catch (err) {
     console.error('❌ Payment initialize error:', err)
@@ -105,7 +102,7 @@ router.get('/verify/:reference', async (req, res) => {
     const response = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
-        headers: { Authorization: `${process.env.NOTCH_PUBLIC_KEY}` },
+        headers: { Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}` },
       }
     )
     const data = await response.json()
@@ -144,14 +141,14 @@ router.post(
     try {
       const signature = req.headers['x-notch-signature']
       const payload = req.body ? req.body.toString('utf8') : ''
-      const PUBLIC = process.env.NOTCHPAY_WEBHOOK_HASH // NotchPay dashboard test: parfois il envoie un ping sans signature.
+      const secret = process.env.NOTCHPAY_WEBHOOK_HASH
 
       if (!signature) {
         console.log('🔎 Webhook test/validation reçu (pas de signature)')
         return res.status(200).send('Webhook endpoint verified')
       }
 
-      if (!verifySignature(payload, signature, PUBLIC)) {
+      if (!verifySignature(payload, signature, secret)) {
         console.error('❌ Invalid webhook signature')
         return res.status(403).send('Invalid signature')
       }
@@ -191,21 +188,42 @@ router.post(
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
   try {
-    const transaction = await prisma.transaction.findUnique({
-      where: { reference: reference },
-      include: { order: true },
-    })
+    // ✅ CORRECTION : Vérification directe auprès de l'API de NotchPay
+    const response = await fetch(
+      `https://api.notchpay.co/payments/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+        },
+      }
+    )
+    const data = await response.json()
+    console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
-    if (transaction?.status === 'complete') {
+    if (data.transaction?.status === 'complete') {
+      const txRef = data.transaction.merchant_reference || reference
+      const transaction = await prisma.transaction.findUnique({
+        where: { reference: txRef },
+      })
+      if (transaction?.status !== 'complete') {
+        await prisma.transaction.update({
+          where: { reference: txRef },
+          data: { status: 'complete', notchData: data },
+        })
+        await prisma.order.update({
+          where: { id: transaction.orderId },
+          data: { status: 'paid' },
+        })
+      }
       return res.redirect(
-        `https://pleingaz-site-web.vercel.app/order-confirmation?ref=${transaction.reference}`
+        `https://pleingaz-site-web.vercel.app/order-confirmation?ref=${txRef}`
       )
     } else {
       return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
     }
   } catch (error) {
-    console.error('❌ Error verifying payment:', error)
-    return res.status(500).send('Error verifying payment')
+    console.error('❌ Erreur de vérification du paiement:', error)
+    return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
   }
 })
 
