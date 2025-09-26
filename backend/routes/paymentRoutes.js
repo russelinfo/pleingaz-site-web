@@ -50,7 +50,7 @@ router.post('/initialize', async (req, res) => {
           email,
           description: `Commande #${orderId}`,
           // ✅ Amélioration: Utiliser une variable d'environnement pour l'URL de callback
-          callback: `${process.env.BACKEND_URL}/api/payments/callback`,
+          callback: "https://pleingaz-site-web.onrender.com/api/payments/callback"
         }),
       }
     )
