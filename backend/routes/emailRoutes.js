@@ -2,6 +2,7 @@
 import express from 'express'
 import { Resend } from 'resend'
 import dotenv from 'dotenv'
+import prisma from '../prismaClient.js'
 
 dotenv.config()
 const router = express.Router()
