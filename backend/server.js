@@ -5,19 +5,24 @@ import cors from 'cors'
 import paymentRoutes from './routes/paymentRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
-import path from 'path'
+import cors from 'cors' 
 
 dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Middleware global
-app.use(cors())
+// Middleware pour gérer les requêtes CORS
+app.use(cors({
+  origin: 'https://pleingaz-site-web.vercel.app', // Autoriser les requêtes de votre domaine Vercel
+  credentials: true
+}));
+
 app.use(express.json()) // ✅ classique pour toutes les routes JSON
 
 // Routes
 app.use('/api/payments', paymentRoutes)
 app.use('/api/orders', orderRoutes)
+
 
 app.use('/api/products', productRoutes)
 
@@ -25,14 +30,6 @@ app.use('/api/products', productRoutes)
 
 app.get('/', (_req, res) => res.send('PleinGaz backend — payments API'))
 
-// Servir les fichiers statiques de l'application React
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-// Pour toute autre requête non gérée par les routes API,
-// renvoyer le fichier index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
