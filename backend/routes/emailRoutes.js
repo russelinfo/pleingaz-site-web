@@ -8,12 +8,12 @@ const router = express.Router()
 
 // Configuration du transporteur Nodemailer
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
+  host: `${process.env.EMAIL_HOST}`,
+  port: `${process.env.EMAIL_PORT}`,
   secure: false, // true pour 465, false pour 587
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: `${process.env.EMAIL_USER}`,
+    pass: `${process.env.EMAIL_PASS}`,
   },
 })
 
@@ -34,7 +34,7 @@ router.post('/contact', async (req, res) => {
   try {
     const mailOptions = {
       from: `"${name}" <${email}>`, // L'adresse de l'utilisateur comme expéditeur
-      to: process.env.EMAIL_USER, // L'adresse de réception (votre support)
+      to: `${process.env.EMAIL_USER}`, // L'adresse de réception (votre support)
       subject: `Nouveau message de contact PleinGaz : ${name}`,
       html: `
         <h3>Nouveau message de contact PleinGaz</h3>
