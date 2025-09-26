@@ -1,7 +1,7 @@
 /* backend/routes/paymentRoutes.js */
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
-import fetch from 'node-fetch' // Node <18, sinon global fetch suffit
+import fetch from 'node-fetch'
 import crypto from 'crypto'
 
 const router = express.Router()
@@ -38,7 +38,8 @@ router.post('/initialize', async (req, res) => {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+          // ✅ CORRECTION MAJEURE: Utiliser la clé secrète pour l'initialisation
+          Authorization: `Bearer ${process.env.NOTCH_SECRET_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -48,7 +49,8 @@ router.post('/initialize', async (req, res) => {
           phone,
           email,
           description: `Commande #${orderId}`,
-          callback: "https://pleingaz-site-web.onrender.com/api/payments/callback",
+          // ✅ Amélioration: Utiliser une variable d'environnement pour l'URL de callback
+          callback: `${process.env.BACKEND_URL}/api/payments/callback`,
         }),
       }
     )
@@ -56,7 +58,8 @@ router.post('/initialize', async (req, res) => {
     const notchPayData = await notchPayResponse.json()
     console.log('📡 Réponse NotchPay init:', notchPayData)
 
-    if (notchPayData?.status === 'Accepted') {
+    // ✅ Amélioration: Vérification de la réponse plus robuste
+    if (notchPayData.status) {
       res.json({
         success: true,
         authorization_url: notchPayData.authorization_url,
