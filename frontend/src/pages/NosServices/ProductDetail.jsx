@@ -1,23 +1,49 @@
 // src/pages/nos service/ProductDetail.jsx
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Minus, ArrowLeft, ShoppingCart, Trash2 } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
 
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-import products from '../../data/products'
+
+// NOUVEAU: Importez toutes vos images localement
+import btn6 from '../../assets/images/btn6.png'
+import btn125 from '../../assets/images/btn12.5.png'
+import btn50 from '../../assets/images/btn50.png'
+import vitrer from '../../assets/images/vitrer.png'
+import classic from '../../assets/images/classic.png'
+import detenteur from '../../assets/images/detenteur.png'
+import detenteur2 from '../../assets/images/detenteur2.png'
+import tuyo from '../../assets/images/tuyo.png'
+import bruleur from '../../assets/images/bruleur.png'
+
+// NOUVEAU: Créez une "carte" pour faire la correspondance nom de fichier -> image
+const imageMap = {
+  'btn6.png': btn6,
+  'btn12.5.png': btn125,
+  'btn50.png': btn50,
+  'vitrer.png': vitrer,
+  'classic.png': classic,
+  'detenteur.png': detenteur,
+  'detenteur2.png': detenteur2,
+  'tuyo.png': tuyo,
+  'bruleur.png': bruleur,
+}
 
 const ProductDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { t } = useTranslation() // Import du hook de traduction
+  const { t } = useTranslation()
   const { cart, addToCart, handleUpdateCart, totalItemsInCart } = useCart()
 
   const [product, setProduct] = useState(null)
   const [selectedPrice, setSelectedPrice] = useState('full')
 
-  // Fonction pour déterminer le cartId unique
+  // NOUVEAU: Ajout des états de chargement et d'erreur
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
   const getCartId = (prod) => {
     if (prod.isGasBottle) {
       return `${prod.id}-${selectedPrice}`
@@ -25,27 +51,60 @@ const ProductDetail = () => {
     return prod.id
   }
 
-  // L'effet met à jour le produit et le cartId lorsque l'ID de l'URL ou le prix sélectionné change
+  // MODIFIÉ: Utilisation de l'API pour récupérer un seul produit
   useEffect(() => {
-    const foundProduct = products.find((p) => p.id === id)
-    if (foundProduct) {
-      setProduct(foundProduct)
-    } else {
-      navigate('/products')
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(
+          `https://pleingaz-site-web.onrender.com/api/products/${id}`
+        )
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`)
+        }
+        const data = await response.json()
+        setProduct(data)
+      } catch (err) {
+        console.error('Erreur lors de la récupération du produit:', err)
+        setError(
+          'Impossible de récupérer le produit. Veuillez réessayer plus tard.'
+        )
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [id, navigate])
+    fetchProduct()
+  }, [id])
 
-  if (!product) {
-    return null
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen text-gray-700'>
+        {t('Chargement du produit...')}
+      </div>
+    )
   }
 
-  // Utilise toujours la dernière version du cartId pour l'accès au panier
+  if (error) {
+    return (
+      <div className='flex items-center justify-center min-h-screen text-red-500'>
+        {error}
+      </div>
+    )
+  }
+
+  // Si le produit n'est pas trouvé
+  if (!product) {
+    return (
+      <div className='flex items-center justify-center min-h-screen text-gray-700'>
+        {t('Produit non trouvé.')}
+      </div>
+    )
+  }
+
   const currentCartId = getCartId(product)
   const itemInCart = cart[currentCartId] || { quantity: 0 }
   const quantityInCart = itemInCart.quantity
 
   const handleUpdate = (action) => {
-    // Vérification de la sélection de prix pour les bouteilles de gaz
     if (product.isGasBottle && !selectedPrice) {
       alert(t('Veuillez sélectionner une option de prix pour le gaz.'))
       return
@@ -78,7 +137,6 @@ const ProductDetail = () => {
       transition={{ duration: 0.5 }}
     >
       <div className='container mx-auto px-4'>
-        {/* En-tête avec bouton de retour et panier */}
         <div className='flex justify-between items-center mb-8'>
           <motion.button
             onClick={() => navigate(-1)}
@@ -104,29 +162,25 @@ const ProductDetail = () => {
           </motion.a>
         </div>
 
-        {/* Contenu principal de la page de détails */}
         <div className='bg-white rounded-2xl shadow-xl p-8 flex flex-col md:flex-row gap-8'>
-          {/* Image du produit */}
           <div className='md:w-1/2 flex justify-center items-center'>
+            {/* MODIFIÉ: Utilisation du dictionnaire imageMap */}
             <img
-              src={product.image}
+              src={imageMap[product.image]}
               alt={t(product.name)}
               className='max-h-[400px] object-contain'
             />
           </div>
 
-          {/* Informations sur le produit */}
           <div className='md:w-1/2'>
             <h1 className='text-3xl font-bold text-gray-800 mb-2'>
               {t(product.name)}
             </h1>
 
-            {/* Description détaillée */}
             <p className='text-lg text-gray-700 leading-relaxed mb-6'>
               {t(product.description)}
             </p>
 
-            {/* Prix et radios */}
             <div className='mb-6'>
               {product.isGasBottle ? (
                 <div className='flex flex-col space-y-2'>
@@ -169,7 +223,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Caractéristiques */}
             {product.features && (
               <div className='mb-6'>
                 <h3 className='text-xl font-semibold text-gray-800 mb-2'>
@@ -183,12 +236,10 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Zone de contrôle de la quantité et boutons d'ajout/retrait */}
             <div className='flex flex-col space-y-4'>
               {product.inStock ? (
                 <>
                   {(quantityInCart || 0) > 0 ? (
-                    // Affichage des boutons +/- et de la quantité
                     <div className='flex items-center space-x-2'>
                       <button
                         onClick={() => handleUpdate('remove')}
@@ -209,7 +260,6 @@ const ProductDetail = () => {
                       </button>
                     </div>
                   ) : (
-                    // Affichage du bouton "Ajouter au panier"
                     <button
                       onClick={() => handleUpdate('add')}
                       className={`bg-red-600 text-white px-6 py-3 rounded-full font-bold text-lg hover:bg-red-700 transition-colors ${

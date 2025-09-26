@@ -1,16 +1,44 @@
-// src/components/CartPage.jsx
-import React, { useState } from 'react'
+// src/components/CartPage.jsx (code corrigé)
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-import products from '../../data/products'
 import { useTranslation } from 'react-i18next'
+
+// Import des images locales
+import btn6 from '../../assets/images/btn6.png'
+import btn125 from '../../assets/images/btn12.5.png'
+import btn50 from '../../assets/images/btn50.png'
+import vitrer from '../../assets/images/vitrer.png'
+import classic from '../../assets/images/classic.png'
+import detenteur from '../../assets/images/detenteur.png'
+import detenteur2 from '../../assets/images/detenteur2.png'
+import tuyo from '../../assets/images/tuyo.png'
+import bruleur from '../../assets/images/bruleur.png'
+
+// Carte fichier → image
+const imageMap = {
+  'btn6.png': btn6,
+  'btn12.5.png': btn125,
+  'btn50.png': btn50,
+  'vitrer.png': vitrer,
+  'classic.png': classic,
+  'detenteur.png': detenteur,
+  'detenteur2.png': detenteur2,
+  'tuyo.png': tuyo,
+  'bruleur.png': bruleur,
+}
 
 const CartPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { cart, handleUpdateCart, emptyCart } = useCart()
+
+  // Formulaire livraison + infos client
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
@@ -18,28 +46,41 @@ const CartPage = () => {
     t('Paiement à la livraison')
   )
 
-  // Helper function to get the actual price value
+  // Charger tous les produits depuis API
+  const [allProducts, setAllProducts] = useState([])
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/products'
+        )
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
+        const data = await response.json()
+        setAllProducts(data)
+      } catch (err) {
+        console.error('Erreur lors du chargement des produits:', err)
+      }
+    }
+    fetchProducts()
+  }, [])
+
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(/[^\d]/g, '')) || 0
     }
-    if (typeof price === 'number') {
-      return price
-    }
-    return 0 // Default to 0 if price is undefined or null
+    if (typeof price === 'number') return price
+    return 0
   }
 
+  // Construire les items du panier
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
       const parts = cartId.split('-')
       const productId = parts[0]
-      const priceType = parts[1] // 'full' or 'empty' if it's a gas bottle
+      const priceType = parts[1]
 
-      const product = products.find((p) => p.id === productId)
-
-      if (!product) {
-        return null // Product not found
-      }
+      const product = allProducts.find((p) => p.id === productId)
+      if (!product) return null
 
       let itemPrice = 0
       let itemName = product.name
@@ -52,8 +93,7 @@ const CartPage = () => {
           itemPrice = getPriceValue(product.emptyPrice)
           itemName = `${t(product.name)} (${t('Gaz seul')})`
         } else {
-          // This case should ideally not happen if cartIds are formed correctly
-          itemPrice = getPriceValue(product.price) // Fallback to base price if no type
+          itemPrice = getPriceValue(product.price)
           itemName = `${t(product.name)} (${t('Inconnu')})`
         }
       } else {
@@ -61,63 +101,117 @@ const CartPage = () => {
         itemName = t(product.name)
       }
 
-      // Ensure itemPrice is correctly determined and not NaN
-      if (isNaN(itemPrice)) {
-        console.error(
-          `Invalid price for product ${productId} with type ${priceType}`
-        )
-        itemPrice = 0 // Prevent NaN propagation
-      }
-
       return {
-        ...product, // Spread original product data
-        id: cartId, // Use the unique cartId for cart operations
+        ...product,
+        id: cartId,
         quantity: cart[cartId].quantity,
-        price: itemPrice, // Store the determined numeric price for this cart item
-        name: itemName, // Use the descriptive name
+        price: itemPrice,
+        name: itemName,
       }
     })
-    .filter((item) => item !== null) // Filter out any null entries (e.g., if a product was deleted from data)
+    .filter((item) => item !== null)
 
-  const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    )
-  }
+  const calculateTotal = () =>
+    cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
 
   const handleRemoveItem = (id) => {
-    // To remove an item, we effectively set its quantity to 0
     handleUpdateCart(id, -cart[id].quantity)
   }
 
-  const handleValidateOrder = () => {
+  // ✅ Validation de la commande (envoi backend)
+  const handleValidateOrder = async () => {
     if (cartItems.length === 0) {
-      alert(
-        t(
-          'Votre panier est vide. Veuillez ajouter des articles pour commander.'
-        )
-      )
+      alert(t('Votre panier est vide. Veuillez ajouter des articles.'))
       return
     }
-
+    if (!customerName || !customerEmail || !customerPhone) {
+      alert(t('Veuillez remplir vos informations personnelles.'))
+      return
+    }
     if (!deliveryDate || !deliveryAddress) {
       alert(t("Veuillez remplir la date et l'adresse de livraison."))
       return
     }
 
-    const orderDetails = {
-      orderNumber: 'PGZ-' + Date.now().toString().slice(-6), // Génère un numéro de commande simple
-      items: cartItems, // Renommé 'cartItems' en 'items'
-      deliveryDate,
+    // Données de la commande pour l'API
+    const orderPayload = {
+      customerName,
+      customerEmail,
+      customerPhone,
       deliveryAddress,
-      deliveryDetails,
+      deliveryDate,
       paymentMethod,
-      totalAmount: calculateTotal(), // Renommé 'total' en 'totalAmount'
+      items: cartItems.map((item) => ({
+        productId: item.id.split('-')[0],
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
+      totalAmount: calculateTotal(),
     }
 
-    emptyCart()
-    navigate('/order-confirmation', { state: { orderDetails } })
+    try {
+      if (paymentMethod === 'Paiement à la livraison') {
+        // Logique existante pour paiement à la livraison
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
+        )
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
+        const data = await response.json()
+
+        const confirmationDetails = {
+          orderNumber: data.orderNumber || data.id,
+          totalAmount: calculateTotal(),
+          deliveryDate,
+          deliveryAddress,
+          paymentMethod,
+          items: cartItems,
+          customerName,
+          customerEmail,
+          customerPhone,
+        }
+        navigate('/order-confirmation', {
+          state: { orderDetails: confirmationDetails },
+        })
+      } else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
+        // Nouvelle logique pour paiement Mobile Money
+        const paymentPayload = {
+          amount: calculateTotal(),
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          description: `Paiement pour commande PleinGaz`,
+          orderData: orderPayload, // ✅ On envoie toutes les données de la commande
+        }
+
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/payments/initialize',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentPayload),
+          }
+        )
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
+        const data = await response.json()
+
+        console.log('✅ Payment initialized, redirecting...', data)
+
+        if (data.authorization_url) {
+          // Redirection vers la page de paiement de NotchPay
+          window.location.href = data.authorization_url
+        } else {
+          alert("Erreur lors de l'initialisation du paiement.")
+        }
+      }
+    } catch (err) {
+      console.error('❌ Erreur commande/paiement:', err)
+      alert("Erreur lors de l'enregistrement de la commande ou du paiement.")
+    }
   }
 
   const getTomorrowDate = () => {
@@ -139,7 +233,7 @@ const CartPage = () => {
             {t('Votre Panier')}
           </h1>
           <motion.button
-            onClick={() => navigate('/products')} // Changed to navigate to /products instead of -1
+            onClick={() => navigate('/products')}
             className='flex items-center text-red-600 font-semibold hover:text-red-700 transition-colors'
             whileHover={{ x: -5 }}
           >
@@ -149,6 +243,7 @@ const CartPage = () => {
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          {/* Panier */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               {t('Récapitulatif de votre commande')}
@@ -163,7 +258,7 @@ const CartPage = () => {
                     animate={{ x: 0, opacity: 1 }}
                   >
                     <img
-                      src={item.image}
+                      src={imageMap[item.image]}
                       alt={item.name}
                       className='w-20 h-20 object-contain rounded-lg mr-4'
                     />
@@ -184,22 +279,22 @@ const CartPage = () => {
                       <div className='flex items-center space-x-2 mt-2'>
                         <button
                           onClick={() => handleUpdateCart(item.id, -1)}
-                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50'
-                          disabled={item.quantity <= 1} // Only disable if quantity is 1
+                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50'
+                          disabled={item.quantity <= 1}
                         >
                           <Minus size={16} />
                         </button>
                         <span className='font-bold'>{item.quantity}</span>
                         <button
                           onClick={() => handleUpdateCart(item.id, 1)}
-                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 transition-colors'
+                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300'
                         >
                           <Plus size={16} />
                         </button>
                       </div>
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className='text-red-500 hover:text-red-700 transition-colors mt-2'
+                        className='text-red-500 hover:text-red-700 mt-2'
                       >
                         <Trash2 size={20} />
                       </button>
@@ -214,80 +309,76 @@ const CartPage = () => {
             </div>
           </div>
 
+          {/* Livraison + infos client */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
-              {t('Informations de livraison')}
+              {t('Informations client et livraison')}
             </h2>
             <div className='space-y-6'>
-              <div>
-                <label
-                  htmlFor='deliveryDate'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  {t('Date de livraison')}
-                </label>
-                <input
-                  type='date'
-                  id='deliveryDate'
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  min={getTomorrowDate()}
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor='deliveryAddress'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  {t('Votre adresse')}
-                </label>
-                <input
-                  type='text'
-                  id='deliveryAddress'
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder={t('Ex: Rue 5, Quartier des Fleurs')}
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor='deliveryDetails'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  {t('Détails (à côté de…)')}
-                </label>
-                <textarea
-                  id='deliveryDetails'
-                  value={deliveryDetails}
-                  onChange={(e) => setDeliveryDetails(e.target.value)}
-                  placeholder={t(
-                    'Ex: Maison à côté de la pharmacie du carrefour'
-                  )}
-                  rows='3'
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
-                />
-              </div>
-              <div>
-                <h3 className='text-xl font-bold text-gray-800 mb-2'>
-                  {t('Mode de paiement')}
-                </h3>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className='block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
-                >
-                  <option value='Paiement à la livraison'>
-                    {t('Paiement à la livraison')}
-                  </option>
-                  <option value='Mobile Money (MTN/Orange)'>
-                    {t('Mobile Money (MTN/Orange)')}
-                  </option>
-                </select>
-              </div>
+              {/* Infos client */}
+              <input
+                type='text'
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder={t('Votre nom complet')}
+                className='w-full p-2 border rounded-md'
+                required
+              />
+              <input
+                type='email'
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t('Votre email')}
+                className='w-full p-2 border rounded-md'
+                required
+              />
+              <input
+                type='tel'
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder={t('Votre numéro de téléphone')}
+                className='w-full p-2 border rounded-md'
+                required
+              />
+
+              {/* Livraison */}
+              <input
+                type='date'
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
+                min={getTomorrowDate()}
+                className='w-full p-2 border rounded-md'
+                required
+              />
+              <input
+                type='text'
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder={t('Adresse de livraison')}
+                className='w-full p-2 border rounded-md'
+                required
+              />
+              <textarea
+                value={deliveryDetails}
+                onChange={(e) => setDeliveryDetails(e.target.value)}
+                placeholder={t('Détails supplémentaires (optionnel)')}
+                rows='3'
+                className='w-full p-2 border rounded-md'
+              />
+
+              {/* Paiement */}
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className='w-full p-2 border rounded-md'
+              >
+                <option value='Paiement à la livraison'>
+                  {t('Paiement à la livraison')}
+                </option>
+                <option value='Mobile Money (MTN/Orange)'>
+                  {t('Mobile Money (MTN/Orange)')}
+                </option>
+              </select>
             </div>
 
             <div className='mt-8'>
@@ -299,7 +390,7 @@ const CartPage = () => {
               </p>
               <motion.button
                 onClick={handleValidateOrder}
-                className='w-full mt-6 bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:bg-red-700 transition-colors disabled:opacity-50'
+                className='w-full mt-6 bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:bg-red-700 disabled:opacity-50'
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={cartItems.length === 0}

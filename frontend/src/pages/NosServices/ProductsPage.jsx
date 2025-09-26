@@ -1,11 +1,34 @@
 // src/pages/nos service/ProductsPage.jsx
-import React, { useState, useEffect } from 'react' // AJOUT DE useEffect
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Search, ShoppingCart, Plus, Minus, Eye, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useNavigate } from 'react-router-dom'
-// SUPPRESSION: import products from '../../data/products'
 import { useTranslation } from 'react-i18next'
+
+// NOUVEAU: Importez toutes vos images localement
+import btn6 from '../../assets/images/btn6.png'
+import btn125 from '../../assets/images/btn12.5.png'
+import btn50 from '../../assets/images/btn50.png'
+import vitrer from '../../assets/images/vitrer.png'
+import classic from '../../assets/images/classic.png'
+import detenteur from '../../assets/images/detenteur.png'
+import detenteur2 from '../../assets/images/detenteur2.png'
+import tuyo from '../../assets/images/tuyo.png'
+import bruleur from '../../assets/images/bruleur.png'
+
+// NOUVEAU: Créez une "carte" pour faire la correspondance nom de fichier -> image
+const imageMap = {
+  'btn6.png': btn6,
+  'btn12.5.png': btn125,
+  'btn50.png': btn50,
+  'vitrer.png': vitrer,
+  'classic.png': classic,
+  'detenteur.png': detenteur,
+  'detenteur2.png': detenteur2,
+  'tuyo.png': tuyo,
+  'bruleur.png': bruleur,
+}
 
 const ProductsPage = () => {
   const { t } = useTranslation()
@@ -14,12 +37,10 @@ const ProductsPage = () => {
   const navigate = useNavigate()
   const [selectedPrices, setSelectedPrices] = useState({})
 
-  // NOUVEL ÉTAT POUR GÉRER LES DONNÉES DE L'API, LE CHARGEMENT ET LES ERREURS
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // HOOK POUR FAIRE L'APPEL API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -30,21 +51,19 @@ const ProductsPage = () => {
           throw new Error(`Erreur HTTP: ${response.status}`)
         }
         const data = await response.json()
-        setProducts(data) // Met à jour l'état avec les données du backend
+        setProducts(data)
       } catch (err) {
         console.error('Erreur lors de la récupération des produits:', err)
         setError(
           'Impossible de récupérer les produits. Veuillez réessayer plus tard.'
         )
       } finally {
-        setLoading(false) // Le chargement est terminé
+        setLoading(false)
       }
     }
-
     fetchProducts()
-  }, []) // Le tableau vide [] s'assure que cet effet ne s'exécute qu'une seule fois au chargement du composant
+  }, [])
 
-  // GESTION DU CHARGEMENT ET DES ERREURS
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen text-gray-700'>
@@ -61,7 +80,6 @@ const ProductsPage = () => {
     )
   }
 
-  // MODIFIÉ: Le filtre utilise maintenant la variable `products` de l'état
   const filteredProducts = products.filter((product) =>
     t(product.name).toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -77,7 +95,6 @@ const ProductsPage = () => {
     }))
   }
 
-  // Helper function to get the actual price value
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(/[^\d]/g, '')) || 0
@@ -85,7 +102,7 @@ const ProductsPage = () => {
     if (typeof price === 'number') {
       return price
     }
-    return 0 // Default to 0 if price is undefined or null
+    return 0
   }
 
   const handleAddToCart = (product) => {
@@ -179,8 +196,9 @@ const ProductsPage = () => {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <div className='relative w-full h-48 flex justify-center items-center p-4 bg-white'>
+                  {/* MODIFIÉ: Utilisation du dictionnaire imageMap */}
                   <img
-                    src={product.image}
+                    src={imageMap[product.image]} // <--- C'est la ligne qui a été changée
                     alt={t(product.name)}
                     className='max-h-full object-contain'
                   />
