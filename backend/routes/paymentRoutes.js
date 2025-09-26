@@ -9,9 +9,9 @@ dotenv.config()
 const router = express.Router()
 
 /** helper signature verify (HMAC SHA256) */
-function verifySignature(payload, signature, secret) {
-  if (!signature || !secret) return false
-  const hmac = crypto.createHmac('sha256', secret)
+function verifySignature(payload, signature, PUBLIC) {
+  if (!signature || !PUBLIC) return false
+  const hmac = crypto.createHmac('sha256', PUBLIC)
   const expected = hmac.update(payload).digest('hex')
   try {
     return crypto.timingSafeEqual(
@@ -51,7 +51,7 @@ router.post('/initialize', async (req, res) => {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.NOTCH_SECRET_KEY}`,
+          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -102,7 +102,7 @@ router.get('/verify/:reference', async (req, res) => {
     const response = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
-        headers: { Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}` },
+        headers: { Authorization: `${process.env.NOTCH_PUBLIC_KEY}` },
       }
     )
     const data = await response.json()
@@ -141,14 +141,14 @@ router.post(
     try {
       const signature = req.headers['x-notch-signature']
       const payload = req.body ? req.body.toString('utf8') : ''
-      const secret = process.env.NOTCHPAY_WEBHOOK_HASH
+      const PUBLIC = process.env.NOTCHPAY_WEBHOOK_HASH
 
       if (!signature) {
         console.log('🔎 Webhook test/validation reçu (pas de signature)')
         return res.status(200).send('Webhook endpoint verified')
       }
 
-      if (!verifySignature(payload, signature, secret)) {
+      if (!verifySignature(payload, signature, PUBLIC)) {
         console.error('❌ Invalid webhook signature')
         return res.status(403).send('Invalid signature')
       }
@@ -193,7 +193,7 @@ router.get('/callback', async (req, res) => {
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
         },
       }
     )
