@@ -32,6 +32,7 @@ const imageMap = {
 const CartPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  // L'appel à emptyCart est ici
   const { cart, handleUpdateCart, emptyCart } = useCart()
 
   // Formulaire livraison + infos client
@@ -118,7 +119,6 @@ const CartPage = () => {
   }
 
   // ✅ Validation de la commande (envoi backend)
-
   const handleValidateOrder = async () => {
     if (cartItems.length === 0) {
       alert(t('Votre panier est vide. Veuillez ajouter des articles.'))
@@ -133,7 +133,7 @@ const CartPage = () => {
       return
     }
 
-    // ✅ Déclaration de l'objet de la commande ici pour qu'il soit accessible partout
+    // Déclaration de l'objet de la commande
     const orderPayload = {
       customerName,
       customerEmail,
@@ -150,6 +150,7 @@ const CartPage = () => {
     }
 
     try {
+      // --- PAIEMENT A LA LIVRAISON ---
       if (paymentMethod === 'Paiement à la livraison') {
         const response = await fetch(
           'https://pleingaz-site-web.onrender.com/api/orders',
@@ -161,6 +162,9 @@ const CartPage = () => {
         )
         if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
         const data = await response.json()
+
+        // ✅ VIDER LE PANIER
+        emptyCart()
 
         const confirmationDetails = {
           orderNumber: data.orderNumber || data.id,
@@ -176,8 +180,10 @@ const CartPage = () => {
         navigate('/order-confirmation', {
           state: { orderDetails: confirmationDetails },
         })
+
+        // --- PAIEMENT MOBILE MONEY ---
       } else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
-        // ✅ Étape 1 : Créer la commande sur le backend d'abord
+        // Étape 1 : Créer la commande sur le backend d'abord
         const orderResponse = await fetch(
           'https://pleingaz-site-web.onrender.com/api/orders',
           {
@@ -197,7 +203,7 @@ const CartPage = () => {
         const orderData = await orderResponse.json()
         const orderId = orderData.id
 
-        // ✅ Étape 2 : Initialiser le paiement avec le bon ID de commande
+        // Étape 2 : Initialiser le paiement avec le bon ID de commande
         const paymentPayload = {
           amount: calculateTotal(),
           phone: customerPhone,
@@ -225,6 +231,8 @@ const CartPage = () => {
         console.log('✅ Payment initialized, redirecting...', paymentData)
 
         if (paymentData.authorization_url) {
+          // ✅ VIDER LE PANIER JUSTE AVANT LA REDIRECTION EXTERNE
+          emptyCart()
           window.location.href = paymentData.authorization_url
         } else {
           alert("Erreur: L'URL de redirection de paiement est manquante.")
@@ -236,14 +244,14 @@ const CartPage = () => {
     }
   }
 
-  // ... (le reste du composant n'est pas modifié)
-
+  // Fonction utilitaire pour la date
   const getTomorrowDate = () => {
     const today = new Date()
     today.setDate(today.getDate() + 1)
     return today.toISOString().split('T')[0]
   }
 
+  // --- RENDU DU COMPOSANT ---
   return (
     <motion.div
       className='bg-gray-50 min-h-screen pt-24 pb-16'
