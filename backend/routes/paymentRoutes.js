@@ -1,200 +1,231 @@
-/* backend/routes/paymentRoutes.js */
+// routes/paymentRoutes.js
 import express from 'express'
-import { PrismaClient } from '@prisma/client'
 import fetch from 'node-fetch'
 import crypto from 'crypto'
+import dotenv from 'dotenv'
+import prisma from '../prismaClient.js' // <-- import du client prisma
 
+dotenv.config()
 const router = express.Router()
-const prisma = new PrismaClient()
 
-/**
- * INITIALISER UN PAIEMENT
+/** helper signature verify (HMAC SHA256) */
+function verifySignature(payload, signature, secret) {
+  if (!signature || !secret) return false
+  const hmac = crypto.createHmac('sha256', secret)
+  const expected = hmac.update(payload).digest('hex')
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(expected, 'hex'),
+      Buffer.from(signature, 'hex')
+    )
+  } catch {
+    return false
+  }
+}
+
+/** POST /api/payments/initialize
+ * body: { amount, currency?, name, email, phone, description? }
  */
 router.post('/initialize', async (req, res) => {
   try {
-    const { amount, phone, email, orderId } = req.body
-
-    if (!amount || !phone || !email || !orderId) {
+    const {
+      amount,
+      currency = 'XAF',
+      name,
+      email,
+      phone,
+      description,
+    } = req.body
+    if (!amount || !email || !phone || !name) {
       return res
         .status(400)
-        .json({ success: false, message: 'Champs manquants.' })
+        .json({ error: 'amount, name, email et phone sont requis' })
     }
 
-    // Créer transaction locale
-    const transaction = await prisma.transaction.create({
+    // 1) créer la transaction en DB (status pending)
+    const reference = 'pleingaz-' + Date.now()
+    const tx = await prisma.transaction.create({
       data: {
+        reference,
         amount,
-        customerPhone: phone,
+        currency,
+        customerName: name,
         customerEmail: email,
-        orderId,
+        customerPhone: phone,
         status: 'pending',
-        reference: crypto.randomUUID(),
       },
     })
 
-    // Appel API NotchPay
-    const notchPayResponse = await fetch(
-      'https://api.notchpay.co/payments/initialize',
+    // 2) Appel NotchPay
+    const response = await fetch('https://api.notchpay.co/payments', {
+      method: 'POST',
+      headers: {
+        Authorization: process.env.NOTCH_PUBLIC_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount,
+        currency,
+        customer: { name, email, phone },
+        description: description || 'Paiement PleinGaz',
+        callback:
+          process.env.PAYMENT_CALLBACK_URL ||
+          'https://pleingaz-site-web.onrender.com/api/payments/callback',
+        reference, // utilise la même reference que la DB
+      }),
+    })
+
+    const data = await response.json()
+    console.log('✅ NotchPay response:', data)
+
+    // 3) stocker la réponse NotchPay dans la DB (optionnel)
+    await prisma.transaction.update({
+      where: { reference },
+      data: { notchData: data },
+    })
+
+    // Retourne la réponse NotchPay au front (ex: authorization_url)
+    return res.json({ ...data, reference })
+  } catch (err) {
+    console.error('❌ Payment initialize error:', err)
+    return res
+      .status(500)
+      .json({ error: "Erreur lors de l'initialisation du paiement" })
+  }
+})
+
+/** GET /api/payments/verify/:reference
+ * appel direct au service NotchPay pour vérifier l'état
+ */
+router.get('/verify/:reference', async (req, res) => {
+  try {
+    const { reference } = req.params
+    const response = await fetch(
+      `https://api.notchpay.co/payments/${reference}`,
       {
-        method: 'POST',
-        headers: {
-          // ✅ CORRECTION MAJEURE: Utiliser la clé secrète pour l'initialisation
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount,
-          currency: 'XAF',
-          reference: transaction.reference,
-          phone,
-          email,
-          description: `Commande #${orderId}`,
-          // ✅ Amélioration: Utiliser une variable d'environnement pour l'URL de callback
-          callback: "https://pleingaz-site-web.onrender.com/api/payments/callback"
-        }),
+        headers: { Authorization: process.env.NOTCH_PUBLIC_KEY },
       }
     )
+    const data = await response.json()
+    console.log('✅ Payment verification:', data)
 
-    const notchPayData = await notchPayResponse.json()
-    console.log('📡 Réponse NotchPay init:', notchPayData)
-
-    // ✅ Amélioration: Vérification de la réponse plus robuste
-    if (notchPayData.status) {
-      res.json({
-        success: true,
-        authorization_url: notchPayData.authorization_url,
-      })
-    } else {
-      res.status(500).json({
-        success: false,
-        message: notchPayData?.message || 'Erreur NotchPay',
+    // Si complete -> mettre à jour la BD
+    const txRef =
+      data.transaction?.merchant_reference ||
+      data.transaction?.trxref ||
+      data.transaction?.reference ||
+      reference
+    if (data.transaction?.status === 'complete' && txRef) {
+      await prisma.transaction.updateMany({
+        where: { reference: txRef },
+        data: { status: 'complete', notchData: data },
       })
     }
+
+    return res.json(data)
   } catch (err) {
-    console.error('❌ Erreur init paiement:', err)
-    res
+    console.error('❌ Payment verify error:', err)
+    return res
       .status(500)
-      .json({ success: false, message: 'Erreur serveur init paiement' })
+      .json({ error: 'Erreur lors de la vérification du paiement' })
   }
 })
 
 /**
- * CALLBACK (redirection utilisateur après paiement)
+ * Webhook endpoint (NotchPay)
+ * Important: faut accepter body RAW (express.raw) pour vérifier la signature.
+ * Route : POST /api/payments/webhook/notchpay
  */
+router.post(
+  '/webhook/notchpay',
+  express.raw({ type: 'application/json' }), // body raw
+  async (req, res) => {
+    try {
+      const signature = req.headers['x-notch-signature']
+      const payload = req.body ? req.body.toString('utf8') : ''
+      const secret = process.env.NOTCHPAY_WEBHOOK_HASH
+
+      // NotchPay dashboard test: parfois il envoie un ping sans signature.
+      if (!signature) {
+        console.log('🔎 Webhook test/validation reçu (pas de signature)')
+        // répondre 200 rapidement (NotchPay attends 2xx)
+        return res.status(200).send('Webhook endpoint verified')
+      }
+
+      // Vérifier la signature
+      if (!verifySignature(payload, signature, secret)) {
+        console.error('❌ Invalid webhook signature')
+        return res.status(403).send('Invalid signature')
+      }
+
+      const event = JSON.parse(payload)
+      console.log('📩 Webhook validé:', event)
+
+      // récupérer la référence stockée (selon ce que NotchPay envoie)
+      const ref =
+        event?.data?.merchant_reference ||
+        event?.data?.trxref ||
+        event?.data?.reference ||
+        event?.data?.trxRef
+
+      if (event.type === 'payment.complete' && ref) {
+        await prisma.transaction.updateMany({
+          where: { reference: ref },
+          data: { status: 'complete', notchData: event },
+        })
+        console.log('✅ Transaction mise à jour en complete pour', ref)
+      } else if (event.type === 'payment.failed' && ref) {
+        await prisma.transaction.updateMany({
+          where: { reference: ref },
+          data: { status: 'failed', notchData: event },
+        })
+        console.log('❌ Transaction mise à jour en failed pour', ref)
+      }
+
+      // Ack
+      return res.status(200).send('Webhook reçu et validé')
+    } catch (error) {
+      console.error('Erreur Webhook:', error)
+      // Toujours répondre 200 ou 500 selon ta stratégie ; NotchPay attend 2xx normalement.
+      return res.status(500).send('Erreur serveur')
+    }
+  }
+)
+
+/** callback (utilisé quand l'utilisateur revient après paiement) */
 router.get('/callback', async (req, res) => {
   const reference = req.query.reference
   try {
-    const notchPayResponse = await fetch(
+    const response = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
+          Authorization: process.env.NOTCH_PUBLIC_KEY,
           'Content-Type': 'application/json',
         },
       }
     )
+    const data = await response.json()
+    console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
-    const notchPayData = await notchPayResponse.json()
-    const txRef = notchPayData.transaction?.merchant_reference || reference
-
-    const transaction = await prisma.transaction.findUnique({
-      where: { reference: txRef },
-    })
-
-    if (notchPayData.transaction?.status === 'complete' && transaction) {
-      await prisma.transaction.update({
+    // Si complete -> mettre à jour la DB
+    const txRef =
+      data.transaction?.merchant_reference ||
+      data.transaction?.trxref ||
+      data.transaction?.reference ||
+      reference
+    if (data.transaction?.status === 'complete' && txRef) {
+      await prisma.transaction.updateMany({
         where: { reference: txRef },
-        data: { status: 'complete', notchData: notchPayData },
+        data: { status: 'complete', notchData: data },
       })
-      await prisma.order.update({
-        where: { id: transaction.orderId },
-        data: { status: 'paid' },
-      })
-
-      return res.redirect(
-        `https://pleingaz-site-web.vercel.app/order-confirmation?ref=${txRef}`
-      )
+      return res.send('✅ Payment successful!')
     } else {
-      return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
+      return res.send('⚠️ Payment not completed.')
     }
   } catch (error) {
-    console.error('❌ Erreur callback:', error)
-    return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
-  }
-})
-
-/**
- * WEBHOOK (notification serveur → serveur de NotchPay)
- */
-router.post('/webhook', async (req, res) => {
-  try {
-    const { reference, status } = req.body
-
-    if (!reference) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Référence manquante.' })
-    }
-
-    const transaction = await prisma.transaction.findUnique({
-      where: { reference },
-    })
-
-    if (!transaction) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Transaction introuvable.' })
-    }
-
-    if (status === 'complete') {
-      await prisma.transaction.update({
-        where: { reference },
-        data: { status: 'complete', notchData: req.body },
-      })
-      await prisma.order.update({
-        where: { id: transaction.orderId },
-        data: { status: 'paid' },
-      })
-    } else if (status === 'failed') {
-      await prisma.transaction.update({
-        where: { reference },
-        data: { status: 'failed', notchData: req.body },
-      })
-      await prisma.order.update({
-        where: { id: transaction.orderId },
-        data: { status: 'cancelled' },
-      })
-    }
-
-    res.json({ success: true })
-  } catch (error) {
-    console.error('❌ Erreur webhook:', error)
-    res.status(500).json({ success: false, message: 'Erreur serveur webhook' })
-  }
-})
-
-/**
- * VÉRIFICATION MANUELLE
- */
-router.get('/verify/:reference', async (req, res) => {
-  const { reference } = req.params
-  try {
-    const notchPayResponse = await fetch(
-      `https://api.notchpay.co/payments/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-    const notchPayData = await notchPayResponse.json()
-    res.json(notchPayData)
-  } catch (err) {
-    console.error('❌ Erreur verify:', err)
-    res
-      .status(500)
-      .json({ success: false, message: 'Erreur serveur vérification' })
+    console.error('❌ Error verifying payment:', error)
+    return res.status(500).send('Error verifying payment')
   }
 })
 
