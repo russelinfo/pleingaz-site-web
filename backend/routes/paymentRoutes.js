@@ -48,8 +48,7 @@ router.post('/initialize', async (req, res) => {
           phone,
           email,
           description: `Commande #${orderId}`,
-          callback: `${process.env.BACKEND_URL}/api/payments/callback`,
-          webhook: `${process.env.BACKEND_URL}/api/payments/webhook`,
+          callback: "https://pleingaz-site-web.onrender.com/api/payments/callback",
         }),
       }
     )
