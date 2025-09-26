@@ -5,7 +5,7 @@ import cors from 'cors'
 import paymentRoutes from './routes/paymentRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
-import cors from 'cors' 
+
 
 dotenv.config()
 const app = express()
