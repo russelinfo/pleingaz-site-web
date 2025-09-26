@@ -39,7 +39,7 @@ router.post('/initialize', async (req, res) => {
         method: 'POST',
         headers: {
           // ✅ CORRECTION MAJEURE: Utiliser la clé secrète pour l'initialisation
-          Authorization: `Bearer ${process.env.NOTCH_SECRET_KEY}`,
+          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
