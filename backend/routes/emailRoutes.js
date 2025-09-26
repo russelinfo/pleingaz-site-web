@@ -24,7 +24,7 @@ router.post('/contact', async (req, res) => {
   }
 
   // 🎯 Remplacez par votre propre adresse e-mail pour recevoir les messages
-  const RECIPIENT_EMAIL = 'keuleng03@gmail.com'
+  const RECIPIENT_EMAIL = 'yemelirussel@gmail.com'
 
   try {
     const { data, error } = await resend.emails.send({
