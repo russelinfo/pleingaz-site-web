@@ -70,6 +70,8 @@ model Transaction {
   reference     String   @unique
   status        String
   amount        Int
+  phone           String?  // ✅ Ajout du champ pour le numéro de téléphone
+  email           String?  // ✅ Ajout du champ pour l'e-mail
   currency      String   @default("XAF")
   customerName  String?
   customerEmail String?
