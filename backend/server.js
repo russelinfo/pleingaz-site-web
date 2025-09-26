@@ -5,7 +5,7 @@ import cors from 'cors'
 import paymentRoutes from './routes/paymentRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
-
+import emailRoutes from './routes/emailRoutes.js'
 
 dotenv.config()
 const app = express()
@@ -22,8 +22,7 @@ app.use(express.json()) // ✅ classique pour toutes les routes JSON
 // Routes
 app.use('/api/payments', paymentRoutes)
 app.use('/api/orders', orderRoutes)
-
-
+app.use('/api/emails', emailRoutes)
 app.use('/api/products', productRoutes)
 
 // Route racine pour vérifier que le serveur fonctionne
