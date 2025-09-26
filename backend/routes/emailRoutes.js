@@ -7,7 +7,7 @@ dotenv.config()
 const router = express.Router()
 
 // ✅ Configuration corrigée du transporteur Nodemailer
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: 'gmail', // 🔥 Utiliser le service Gmail directement
   host: 'smtp.gmail.com',
   port: 587,
