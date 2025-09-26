@@ -1,4 +1,3 @@
-// src/components/CartPage.jsx (code corrigé)
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
@@ -119,9 +118,6 @@ const CartPage = () => {
   }
 
   // ✅ Validation de la commande (envoi backend)
-
-  // src/components/CartPage.jsx
-  // ... (imports et autres codes non modifiés)
 
   const handleValidateOrder = async () => {
     if (cartItems.length === 0) {

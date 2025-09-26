@@ -8,9 +8,10 @@ const prisma = new PrismaClient()
 
 router.post('/initialize', async (req, res) => {
   try {
-    const { amount, phone, email, orderId } = req.body // ✅ S'assure de récupérer les bonnes données du frontend
+    const { amount, phone, email, orderId } = req.body
 
     if (!amount || !phone || !email || !orderId) {
+      console.error('Données de paiement manquantes:', req.body)
       return res
         .status(400)
         .json({ success: false, message: 'Données de paiement manquantes.' })
@@ -32,7 +33,8 @@ router.post('/initialize', async (req, res) => {
       {
         method: 'POST',
         headers: {
-          Authorization: process.env.NOTCH_SECRET_KEY,
+          // ✅ CORRECTION MAJEURE: Ajouter le préfixe 'Bearer '
+          Authorization: `Bearer ${process.env.NOTCH_SECRET_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -47,12 +49,22 @@ router.post('/initialize', async (req, res) => {
     )
 
     const notchPayData = await notchPayResponse.json()
+    // ✅ Ajout des logs pour le débogage. VÉRIFIEZ CE LOG SUR RENDER!
+    console.log(
+      'Réponse complète de NotchPay:',
+      JSON.stringify(notchPayData, null, 2)
+    )
+
     if (notchPayData.status) {
       res.json({
         success: true,
         authorization_url: notchPayData.authorization_url,
       })
     } else {
+      console.error(
+        "Échec de l'initialisation de NotchPay avec l'erreur:",
+        notchPayData.message
+      )
       res
         .status(500)
         .json({
@@ -78,7 +90,7 @@ router.get('/callback', async (req, res) => {
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: {
-          Authorization: process.env.NOTCH_PUBLIC_KEY,
+          Authorization: `Bearer ${process.env.NOTCH_PUBLIC_KEY}`,
           'Content-Type': 'application/json',
         },
       }
