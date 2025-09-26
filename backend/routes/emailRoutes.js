@@ -55,4 +55,42 @@ router.post('/contact', async (req, res) => {
   }
 })
 
+router.post('/subscribe', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'L\'email est requis.' });
+  }
+
+  // (Optionnel : Ajoutez ici une validation d'email plus robuste si vous le souhaitez)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ success: false, message: 'Adresse email invalide.' })
+  }
+
+  try {
+    // 1. Vérifier si l'abonné existe déjà
+    const existingSubscriber = await prisma.subscriber.findUnique({
+      where: { email },
+    });
+
+    if (existingSubscriber) {
+      // 409 Conflict : l'utilisateur est déjà abonné
+      return res.status(409).json({ success: false, message: 'Cet email est déjà abonné.' });
+    }
+
+    // 2. Créer l'abonné dans la base de données
+    await prisma.subscriber.create({
+      data: { email },
+    });
+
+    console.log(`✅ Nouvel abonné enregistré: ${email}`);
+    
+    res.json({ success: true, message: 'Inscription à la newsletter réussie !' });
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'abonnement à la newsletter:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur lors de l\'abonnement.' });
+  }
+});
+
 export default router

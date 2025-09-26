@@ -1,5 +1,5 @@
 // src/pages/BlogPage.jsx
-import React from 'react'
+import React, { useState } from 'react' // 👈 ESSENTIEL : Importez useState
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import blogData from '../data/blogData' // Importation des données du blog
@@ -17,6 +17,58 @@ const cardVariants = {
 
 const BlogPage = () => {
   const { t } = useTranslation()
+
+  // 1. ÉTATS POUR LA NEWSLETTER
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState({ text: '', type: '' })
+
+  // 2. FONCTION DE GESTION DE L'ABONNEMENT
+  const handleSubscribe = async (e) => {
+    e.preventDefault()
+    if (!email) {
+      setSubmitMessage({
+        text: t('Veuillez entrer une adresse email.'),
+        type: 'error',
+      })
+      return
+    }
+
+    setIsLoading(true)
+    setSubmitMessage({ text: '', type: '' })
+
+    try {
+      // 🎯 Appel à votre route API /api/emails/subscribe
+      const response = await fetch(
+        'https://pleingaz-site-web.onrender.com/api/emails/subscribe', // 👈 VÉRIFIEZ ET REMPLACEZ SI NÉCESSAIRE
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSubmitMessage({
+          text: t('Inscription réussie ! Merci de nous rejoindre.'),
+          type: 'success',
+        })
+        setEmail('') // Vider le champ en cas de succès
+      } else {
+        // Capture le message d'erreur du backend (ex: "Cet email est déjà abonné.")
+        const errorText =
+          data.message || t("Erreur lors de l'abonnement. Veuillez réessayer.")
+        throw new Error(errorText)
+      }
+    } catch (error) {
+      console.error("Erreur d'abonnement:", error.message)
+      setSubmitMessage({ text: error.message, type: 'error' })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className='bg-gray-50 py-16 px-6 md:px-12 min-h-screen'>
@@ -85,7 +137,7 @@ const BlogPage = () => {
         </button>
       </motion.div>
 
-      {/* Newsletter */}
+      {/* Newsletter (MISE À JOUR) */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -97,16 +149,41 @@ const BlogPage = () => {
           {t('Abonnez-vous à notre newsletter')}
         </h2>
         <p className='text-gray-600 mb-6'>{t('newsletter.description')}</p>
-        <div className='flex justify-center'>
+
+        {/* 3. Affichage du message (Succès/Erreur) */}
+        {submitMessage.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-3 max-w-lg mx-auto mb-4 rounded-xl font-medium ${
+              submitMessage.type === 'success'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {submitMessage.text}
+          </motion.div>
+        )}
+
+        {/* 4. Formulaire connecté */}
+        <form onSubmit={handleSubscribe} className='flex justify-center'>
           <input
             type='email'
+            value={email} // 👈 Lien avec l'état 'email'
+            onChange={(e) => setEmail(e.target.value)} // 👈 Met à jour l'état
             placeholder={t('Entrez votre email')}
             className='w-full max-w-sm px-4 py-3 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-600'
+            required
+            disabled={isLoading}
           />
-          <button className='bg-red-600 text-white font-bold py-3 px-6 rounded-r-lg hover:bg-red-700 transition-colors'>
-            {t("S'abonner")}
+          <button
+            type='submit'
+            className='bg-red-600 text-white font-bold py-3 px-6 rounded-r-lg hover:bg-red-700 transition-colors disabled:opacity-50'
+            disabled={isLoading}
+          >
+            {isLoading ? t('Inscription...') : t("S'abonner")}
           </button>
-        </div>
+        </form>
       </motion.div>
     </div>
   )

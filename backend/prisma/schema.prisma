@@ -83,3 +83,13 @@ model Transaction {
   order   Order? @relation(fields: [orderId], references: [id])
 }
 
+// =====================
+//   TABLE : sbscribe
+// =====================
+
+model Subscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique // Assure qu'une seule adresse est stockée
+  subscribedAt DateTime @default(now()) // Timestamp de l'inscription
+  
+}
