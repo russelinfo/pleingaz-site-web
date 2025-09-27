@@ -66,16 +66,17 @@ model OrderItem {
 //   TABLE : Transaction
 // =====================
 model Transaction {
-  id            Int      @id @default(autoincrement())
-  reference     String   @unique
-  status        String
-  amount        Int
-  currency      String   @default("XAF")
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-  notchData     Json?                // ✅ nouveau champ JSON
-  createdAt     DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  reference      String   @unique                     // ta référence interne (merchant_reference)
+  notchReference String?                               // référence fournie par NotchPay (trx.xxxx)
+  status         String
+  amount         Int
+  currency       String   @default("XAF")
+  customerName   String?
+  customerEmail  String?
+  customerPhone  String?
+  notchData      Json?                                  // stockage de la réponse NotchPay
+  createdAt      DateTime @default(now())
 
   orderId Int?
   order   Order? @relation(fields: [orderId], references: [id])
