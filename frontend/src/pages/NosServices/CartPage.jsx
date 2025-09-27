@@ -1,4 +1,4 @@
-// frontend/src/pages/CartPage.jsx
+// src/components/CartPage.jsx
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useTranslation } from 'react-i18next'
 
-// Import des images locales
+// Import images locales
 import btn6 from '../../assets/images/btn6.png'
 import btn125 from '../../assets/images/btn12.5.png'
 import btn50 from '../../assets/images/btn50.png'
@@ -17,7 +17,7 @@ import detenteur2 from '../../assets/images/detenteur2.png'
 import tuyo from '../../assets/images/tuyo.png'
 import bruleur from '../../assets/images/bruleur.png'
 
-// Carte fichier → image
+// Mapping fichier → image
 const imageMap = {
   'btn6.png': btn6,
   'btn12.5.png': btn125,
@@ -44,7 +44,7 @@ const CartPage = () => {
   const [deliveryDetails, setDeliveryDetails] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cash')
 
-  // Charger produits depuis API
+  // Produits (chargés depuis backend)
   const [allProducts, setAllProducts] = useState([])
   useEffect(() => {
     const fetchProducts = async () => {
@@ -62,6 +62,7 @@ const CartPage = () => {
     fetchProducts()
   }, [])
 
+  // Récup prix
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(/[^\d]/g, '')) || 0
@@ -70,10 +71,13 @@ const CartPage = () => {
     return 0
   }
 
-  // Construire items panier
+  // Construire le panier
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
-      const [productId, priceType] = cartId.split('-')
+      const parts = cartId.split('-')
+      const productId = parts[0]
+      const priceType = parts[1]
+
       const product = allProducts.find((p) => p.id === productId)
       if (!product) return null
 
@@ -83,15 +87,17 @@ const CartPage = () => {
       if (product.isGasBottle) {
         if (priceType === 'full') {
           itemPrice = getPriceValue(product.fullPrice)
-          itemName = `${t(product.name)} (${t('avec GPL')})`
+          itemName = `${product.name} (avec GPL)`
         } else if (priceType === 'empty') {
           itemPrice = getPriceValue(product.emptyPrice)
-          itemName = `${t(product.name)} (${t('Gaz seul')})`
+          itemName = `${product.name} (Gaz seul)`
         } else {
           itemPrice = getPriceValue(product.price)
+          itemName = `${product.name} (Inconnu)`
         }
       } else {
         itemPrice = getPriceValue(product.price)
+        itemName = product.name
       }
 
       return {
@@ -111,25 +117,32 @@ const CartPage = () => {
     handleUpdateCart(id, -cart[id].quantity)
   }
 
-  // ✅ Validation de la commande
+  // --- Validation commande & paiement
   const handleValidateOrder = async () => {
     if (cartItems.length === 0) {
-      alert(t('Votre panier est vide.'))
+      alert('Votre panier est vide.')
       return
     }
     if (!customerName || !customerEmail || !customerPhone) {
-      alert(t('Veuillez remplir vos informations personnelles.'))
+      alert('Veuillez remplir vos informations.')
       return
     }
     if (!deliveryDate || !deliveryAddress) {
-      alert(t("Veuillez remplir la date et l'adresse de livraison."))
+      alert("Veuillez remplir la date et l'adresse de livraison.")
       return
     }
 
+    // ✅ Normaliser numéro
+    let phone = customerPhone
+    if (!phone.startsWith('+237')) {
+      phone = `+237${phone.replace(/^0+/, '')}`
+    }
+
+    // 1. Créer commande backend
     const orderPayload = {
       customerName,
       customerEmail,
-      customerPhone,
+      customerPhone: phone,
       deliveryAddress,
       deliveryDate,
       paymentMethod,
@@ -142,62 +155,76 @@ const CartPage = () => {
     }
 
     try {
-      // Paiement à la livraison
+      const orderRes = await fetch(
+        'https://pleingaz-site-web.onrender.com/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload),
+        }
+      )
+      if (!orderRes.ok) throw new Error(`Erreur HTTP ${orderRes.status}`)
+      const orderData = await orderRes.json()
+      const orderId = orderData.id
+
+      // --- Paiement à la livraison
       if (paymentMethod === 'cash') {
-        const response = await fetch(
-          'https://pleingaz-site-web.onrender.com/api/orders',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderPayload),
-          }
-        )
-        const data = await response.json()
-
         emptyCart()
-        navigate('/order-confirmation', {
-          state: { orderDetails: { ...orderPayload, orderId: data.id } },
-        })
-      } else {
-        // Autres paiements (mobile / carte)
-        const orderResponse = await fetch(
-          'https://pleingaz-site-web.onrender.com/api/orders',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderPayload),
-          }
-        )
-        const orderData = await orderResponse.json()
-
-        const paymentPayload = {
-          amount: calculateTotal(),
-          phone: customerPhone,
-          email: customerEmail,
-          orderId: orderData.id,
-          paymentMethod, // orange-money / mtn-momo / card
-        }
-
-        const paymentResponse = await fetch(
-          'https://pleingaz-site-web.onrender.com/api/payments/initialize',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(paymentPayload),
-          }
-        )
-        const paymentData = await paymentResponse.json()
-        console.log('✅ Payment initialized:', paymentData)
-
-        if (paymentData.authorization_url) {
-          emptyCart()
-          window.location.href = paymentData.authorization_url
-        } else {
-          alert(
-            'Veuillez confirmer le paiement sur votre téléphone ou carte bancaire.'
-          )
-        }
+        navigate('/order-confirmation', { state: { orderDetails: orderData } })
+        return
       }
+
+      // --- Paiement NotchPay
+      const payRes = await fetch(
+        'https://pleingaz-site-web.onrender.com/api/payments/initialize',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: calculateTotal(),
+            email: customerEmail,
+            phone,
+            orderId,
+            paymentMethod,
+          }),
+        }
+      )
+      const payData = await payRes.json()
+      if (!payData.success) {
+        alert("Erreur lors de l'initialisation du paiement.")
+        return
+      }
+
+      const ref = payData.reference
+
+      if (paymentMethod === 'card' && payData.notch?.authorization_url) {
+        // Redirection bancaire
+        window.location.href = payData.notch.authorization_url
+        return
+      }
+
+      // ✅ Mobile Money → Polling
+      alert('Paiement en cours, vérifiez votre téléphone…')
+
+      const interval = setInterval(async () => {
+        const verifyRes = await fetch(
+          `https://pleingaz-site-web.onrender.com/api/payments/verify/${ref}`
+        )
+        const verifyData = await verifyRes.json()
+        const status = verifyData.transaction?.status
+        console.log('Polling status:', status)
+
+        if (status === 'complete') {
+          clearInterval(interval)
+          emptyCart()
+          navigate('/order-confirmation', {
+            state: { orderDetails: orderData },
+          })
+        } else if (status === 'failed') {
+          clearInterval(interval)
+          alert('❌ Paiement échoué.')
+        }
+      }, 5000)
     } catch (err) {
       console.error('❌ Erreur commande/paiement:', err)
       alert(`Erreur: ${err.message}`)
@@ -210,13 +237,9 @@ const CartPage = () => {
     return today.toISOString().split('T')[0]
   }
 
+  // --- UI rendu ---
   return (
-    <motion.div
-      className='bg-gray-50 min-h-screen pt-24 pb-16'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <motion.div className='bg-gray-50 min-h-screen pt-24 pb-16'>
       <div className='container mx-auto px-4'>
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
@@ -225,7 +248,6 @@ const CartPage = () => {
           <motion.button
             onClick={() => navigate('/products')}
             className='flex items-center text-red-600 font-semibold hover:text-red-700'
-            whileHover={{ x: -5 }}
           >
             <ArrowLeft size={20} className='mr-2' />
             {t('Continuer mes achats')}
@@ -233,9 +255,9 @@ const CartPage = () => {
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Liste panier */}
+          {/* Panier */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
-            <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
+            <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               {t('Récapitulatif de votre commande')}
             </h2>
             <div className='space-y-6'>
@@ -244,22 +266,20 @@ const CartPage = () => {
                   <motion.div
                     key={item.id}
                     className='flex items-center border-b pb-4'
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
                   >
                     <img
                       src={imageMap[item.image]}
                       alt={item.name}
-                      className='w-20 h-20 object-contain rounded-lg mr-4'
+                      className='w-20 h-20 object-contain mr-4'
                     />
                     <div className='flex-1'>
                       <h3 className='font-semibold text-lg'>{item.name}</h3>
-                      <p className='text-sm text-gray-600'>
+                      <p>
                         {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
                         Fcfa
                       </p>
                     </div>
-                    <div className='text-right'>
+                    <div className='text-right flex flex-col items-end'>
                       <p className='text-xl font-bold text-red-600'>
                         {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
                         Fcfa
@@ -267,16 +287,12 @@ const CartPage = () => {
                       <div className='flex items-center space-x-2 mt-2'>
                         <button
                           onClick={() => handleUpdateCart(item.id, -1)}
-                          className='bg-gray-200 p-1 rounded-full'
                           disabled={item.quantity <= 1}
                         >
                           <Minus size={16} />
                         </button>
                         <span className='font-bold'>{item.quantity}</span>
-                        <button
-                          onClick={() => handleUpdateCart(item.id, 1)}
-                          className='bg-gray-200 p-1 rounded-full'
-                        >
+                        <button onClick={() => handleUpdateCart(item.id, 1)}>
                           <Plus size={16} />
                         </button>
                       </div>
@@ -297,9 +313,9 @@ const CartPage = () => {
             </div>
           </div>
 
-          {/* Formulaire client */}
+          {/* Livraison + Paiement */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
-            <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
+            <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               {t('Informations client et livraison')}
             </h2>
             <div className='space-y-4'>
@@ -341,36 +357,33 @@ const CartPage = () => {
               <textarea
                 value={deliveryDetails}
                 onChange={(e) => setDeliveryDetails(e.target.value)}
-                placeholder={t('Détails supplémentaires (optionnel)')}
+                placeholder={t('Détails supplémentaires')}
+                rows='3'
                 className='w-full p-2 border rounded-md'
               />
 
-              {/* Choix méthode paiement */}
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className='w-full p-2 border rounded-md'
               >
-                <option value='cash'>💵 {t('Paiement à la livraison')}</option>
-                <option value='orange-money'>📱 {t('Orange Money')}</option>
-                <option value='mtn-momo'>📱 {t('MTN Mobile Money')}</option>
-                <option value='card'>💳 {t('Carte Bancaire')}</option>
+                <option value='cash'>{t('Paiement à la livraison')}</option>
+                <option value='momo.orange'>{t('Orange Money')}</option>
+                <option value='momo.mtn'>{t('MTN Mobile Money')}</option>
+                <option value='card'>{t('Carte bancaire')}</option>
               </select>
             </div>
 
-            <div className='mt-6'>
-              <h3 className='text-2xl font-bold'>
+            <div className='mt-8'>
+              <h3 className='text-2xl font-bold text-gray-800'>
                 {t('Total de la commande')}
               </h3>
-              <p className='text-4xl font-extrabold text-red-600'>
+              <p className='text-4xl font-extrabold text-red-600 mt-2'>
                 {calculateTotal().toLocaleString('fr-CM')} Fcfa
               </p>
               <motion.button
                 onClick={handleValidateOrder}
-                className='w-full mt-6 bg-red-600 text-white font-bold py-3 px-6 rounded-full'
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={cartItems.length === 0}
+                className='w-full mt-6 bg-red-600 text-white font-bold py-4 px-6 rounded-full'
               >
                 {t('Valider la commande')}
               </motion.button>
