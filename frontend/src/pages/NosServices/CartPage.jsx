@@ -36,24 +36,21 @@ const BACKEND_URL = 'https://pleingaz-site-web.onrender.com'
 const CartPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { cart, handleUpdateCart, emptyCart } = useCart()
+  const { cart, handleUpdateCart, emptyCart } = useCart() // Infos client
 
-  // Infos client
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentMethod, setPaymentMethod] = useState('cash') // ✅ NOUVEL ÉTAT : Gérer le statut du paiement en ligne
 
-  // ✅ NOUVEL ÉTAT : Gérer le statut du paiement en ligne
   const [paymentStatus, setPaymentStatus] = useState({
     state: 'idle',
     message: '',
-  })
+  }) // Charger produits depuis API (inchangé)
 
-  // Charger produits depuis API (inchangé)
   const [allProducts, setAllProducts] = useState([])
   useEffect(() => {
     // ... (Logique fetchProducts inchangée) ...
@@ -68,18 +65,15 @@ const CartPage = () => {
       }
     }
     fetchProducts()
-  }, [])
-  // ... (Fonctions getPriceValue, cartItems, calculateTotal, handleRemoveItem inchangées) ...
-
+  }, []) // ... (Fonctions getPriceValue, cartItems, calculateTotal, handleRemoveItem inchangées) ...
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(/[^\d]/g, '')) || 0
     }
     if (typeof price === 'number') return price
     return 0
-  }
+  } // Construire items panier (simplifié pour la clarté)
 
-  // Construire items panier (simplifié pour la clarté)
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
       const [productId, priceType] = cartId.split('-')
@@ -114,9 +108,8 @@ const CartPage = () => {
 
   const handleRemoveItem = (id) => {
     handleUpdateCart(id, -cart[id].quantity)
-  }
+  } // Fonction de polling pour vérifier le statut du paiement
 
-  // Fonction de polling pour vérifier le statut du paiement
   const pollPaymentStatus = (reference) => {
     return new Promise((resolve) => {
       const interval = setInterval(async () => {
@@ -146,9 +139,8 @@ const CartPage = () => {
           clearInterval(interval)
           resolve('error')
         }
-      }, 5000) // Vérifie toutes les 5 secondes
+      }, 5000) // Vérifie toutes les 5 secondes // Arrêter le polling après un certain délai (ex: 5 minutes = 300000 ms)
 
-      // Arrêter le polling après un certain délai (ex: 5 minutes = 300000 ms)
       setTimeout(() => {
         clearInterval(interval)
         if (paymentStatus.state === 'pending') {
@@ -156,9 +148,8 @@ const CartPage = () => {
         }
       }, 300000)
     })
-  }
+  } // ✅ MISE À JOUR : Validation de la commande
 
-  // ✅ MISE À JOUR : Validation de la commande
   const handleValidateOrder = async () => {
     // ... (Validations inchangées) ...
     if (cartItems.length === 0) {
@@ -199,9 +190,8 @@ const CartPage = () => {
         body: JSON.stringify(orderPayload),
       })
       const orderData = await orderResponse.json()
-      const orderId = orderData.id
+      const orderId = orderData.id // Paiement à la livraison
 
-      // Paiement à la livraison
       if (paymentMethod === 'cash') {
         emptyCart()
         navigate('/order-confirmation', {
@@ -214,11 +204,8 @@ const CartPage = () => {
           },
         })
         return
-      }
+      } // 2. Paiements Mobile Money / Carte (NotchPay) // ✅ Adaptation du paymentMethod pour NotchPay
 
-      // 2. Paiements Mobile Money / Carte (NotchPay)
-
-      // ✅ Adaptation du paymentMethod pour NotchPay
       let notchPaymentMethod = ''
       if (paymentMethod === 'mtn-momo') {
         notchPaymentMethod = 'momo.mtn'
@@ -230,9 +217,25 @@ const CartPage = () => {
         throw new Error(t('Méthode de paiement en ligne non supportée.'))
       }
 
+      // 🛑 CORRECTION: Formatage du numéro de téléphone avec +237 pour NotchPay
+      let formattedPhone = customerPhone
+        .replace(/[^0-9+]/g, '')
+        .replace(/\s/g, '') // Nettoyer
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = formattedPhone.substring(1) // Retirer le '0' initial (ex: 0677 -> 677)
+      }
+      if (!formattedPhone.startsWith('+237')) {
+        if (formattedPhone.startsWith('237')) {
+          formattedPhone = '+' + formattedPhone // Ajouter le '+' si '237' est déjà là
+        } else {
+          formattedPhone = '+237' + formattedPhone // Ajouter l'indicatif complet
+        }
+      }
+      formattedPhone = formattedPhone.replace(/^\+\+/, '+') // Éviter les doubles +
+
       const paymentPayload = {
         amount: calculateTotal(),
-        phone: customerPhone,
+        phone: formattedPhone, // 👈 UTILISATION DU NUMÉRO FORMATÉ
         email: customerEmail,
         orderId: orderId,
         paymentMethod: notchPaymentMethod, // ✅ On envoie le format NotchPay
@@ -241,9 +244,8 @@ const CartPage = () => {
       setPaymentStatus({
         state: 'processing',
         message: t('Initialisation du paiement en cours...'),
-      })
+      }) // 3. Initialiser la transaction NotchPay (sur votre backend /payments)
 
-      // 3. Initialiser la transaction NotchPay (sur votre backend /payments)
       const paymentResponse = await fetch(
         `${BACKEND_URL}/api/payments/initialize`, // L'endpoint que vous avez adapté pour POST /payments
         {
@@ -260,9 +262,8 @@ const CartPage = () => {
         )
       }
 
-      const transactionReference = paymentData.reference
+      const transactionReference = paymentData.reference // CAS 1: Mobile Money Direct (USSD Push)
 
-      // CAS 1: Mobile Money Direct (USSD Push)
       if (
         notchPaymentMethod === 'momo.mtn' ||
         notchPaymentMethod === 'momo.orange'
@@ -272,9 +273,8 @@ const CartPage = () => {
           message: t(
             'Demande envoyée ! Veuillez confirmer le paiement sur votre téléphone mobile.'
           ),
-        })
+        }) // Démarrer le polling
 
-        // Démarrer le polling
         const finalStatus = await pollPaymentStatus(transactionReference)
 
         if (finalStatus === 'complete') {
@@ -302,8 +302,7 @@ const CartPage = () => {
             message: t('Le paiement a échoué ou a expiré. Veuillez réessayer.'),
           })
         }
-      }
-      // CAS 2: Redirection (Carte Bancaire)
+      } // CAS 2: Redirection (Carte Bancaire)
       else if (paymentData.authorization_url) {
         setPaymentStatus({
           state: 'redirect',
@@ -343,9 +342,8 @@ const CartPage = () => {
     const today = new Date()
     today.setDate(today.getDate() + 1)
     return today.toISOString().split('T')[0]
-  }
+  } // Fonction pour déterminer si le bouton de validation doit être désactivé
 
-  // Fonction pour déterminer si le bouton de validation doit être désactivé
   const isValidationDisabled =
     cartItems.length === 0 ||
     paymentStatus.state === 'loading' ||
@@ -360,30 +358,38 @@ const CartPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+           {' '}
       <div className='container mx-auto px-4'>
-        {/* ... (En-tête inchangé) ... */}
+                {/* ... (En-tête inchangé) ... */}       {' '}
         <div className='flex items-center justify-between mb-8'>
+                   {' '}
           <h1 className='text-4xl font-extrabold text-gray-800'>
-            {t('Votre Panier')}
+                        {t('Votre Panier')}         {' '}
           </h1>
+                   {' '}
           <motion.button
             onClick={() => navigate('/products')}
             className='flex items-center text-red-600 font-semibold hover:text-red-700'
             whileHover={{ x: -5 }}
           >
-            <ArrowLeft size={20} className='mr-2' />
-            {t('Continuer mes achats')}
+                        <ArrowLeft size={20} className='mr-2' />           {' '}
+            {t('Continuer mes achats')}         {' '}
           </motion.button>
+                 {' '}
         </div>
-
+               {' '}
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Liste panier (inchangée) */}
+                    {/* Liste panier (inchangée) */}         {' '}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
+                       {' '}
             <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
-              {t('Récapitulatif de votre commande')}
+                            {t('Récapitulatif de votre commande')}           {' '}
             </h2>
+                       {' '}
             <div className='space-y-6'>
-              {/* ... (Affichage des articles du panier inchangé) ... */}
+                           {' '}
+              {/* ... (Affichage des articles du panier inchangé) ... */}       
+                   {' '}
               {cartItems.length > 0 ? (
                 cartItems.map((item) => (
                   <motion.div
@@ -392,64 +398,89 @@ const CartPage = () => {
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                   >
-                    {/* ... (détails de l'article) ... */}
+                                        {/* ... (détails de l'article) ... */}
+                                       {' '}
                     <img
                       src={imageMap[item.image]}
                       alt={item.name}
                       className='w-20 h-20 object-contain rounded-lg mr-4'
                     />
+                                       {' '}
                     <div className='flex-1'>
-                      <h3 className='font-semibold text-lg'>{item.name}</h3>
+                                           {' '}
+                      <h3 className='font-semibold text-lg'>{item.name}</h3>   
+                                       {' '}
                       <p className='text-sm text-gray-600'>
-                        {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
-                        Fcfa
+                                                {item.quantity} x{' '}
+                        {item.price.toLocaleString('fr-CM')}                    
+                            Fcfa                      {' '}
                       </p>
+                                         {' '}
                     </div>
+                                       {' '}
                     <div className='text-right'>
+                                           {' '}
                       <p className='text-xl font-bold text-red-600'>
-                        {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
-                        Fcfa
+                                               {' '}
+                        {(item.price * item.quantity).toLocaleString('fr-CM')}  
+                                              Fcfa                      {' '}
                       </p>
+                                           {' '}
                       <div className='flex items-center space-x-2 mt-2'>
+                                               {' '}
                         <button
                           onClick={() => handleUpdateCart(item.id, -1)}
                           className='bg-gray-200 p-1 rounded-full'
                           disabled={item.quantity <= 1}
                         >
-                          <Minus size={16} />
+                                                    <Minus size={16} />         
+                                       {' '}
                         </button>
-                        <span className='font-bold'>{item.quantity}</span>
+                                               {' '}
+                        <span className='font-bold'>{item.quantity}</span>     
+                                         {' '}
                         <button
                           onClick={() => handleUpdateCart(item.id, 1)}
                           className='bg-gray-200 p-1 rounded-full'
                         >
-                          <Plus size={16} />
+                                                    <Plus size={16} />         
+                                       {' '}
                         </button>
+                                             {' '}
                       </div>
+                                           {' '}
                       <button
                         onClick={() => handleRemoveItem(item.id)}
                         className='text-red-500 hover:text-red-700 mt-2'
                       >
-                        <Trash2 size={20} />
+                                                <Trash2 size={20} />           
+                                 {' '}
                       </button>
+                                         {' '}
                     </div>
+                                     {' '}
                   </motion.div>
                 ))
               ) : (
                 <p className='text-center text-gray-500'>
-                  {t('Votre panier est vide.')}
+                                    {t('Votre panier est vide.')}               {' '}
                 </p>
               )}
+                         {' '}
             </div>
+                     {' '}
           </div>
-
-          {/* Formulaire client */}
+                    {/* Formulaire client */}         {' '}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
+                       {' '}
             <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
-              {t('Informations client et livraison')}
+                            {t('Informations client et livraison')}           {' '}
             </h2>
+                       {' '}
             <div className='space-y-4'>
+                           {' '}
               {/* ... (Champs de formulaire client/livraison inchangés) ... */}
+                           {' '}
               <input
                 type='text'
                 value={customerName}
@@ -457,6 +488,7 @@ const CartPage = () => {
                 placeholder={t('Votre nom complet')}
                 className='w-full p-2 border rounded-md'
               />
+                           {' '}
               <input
                 type='email'
                 value={customerEmail}
@@ -464,6 +496,7 @@ const CartPage = () => {
                 placeholder={t('Votre email')}
                 className='w-full p-2 border rounded-md'
               />
+                           {' '}
               <input
                 type='tel'
                 value={customerPhone}
@@ -471,6 +504,7 @@ const CartPage = () => {
                 placeholder={t('Votre numéro de téléphone')}
                 className='w-full p-2 border rounded-md'
               />
+                           {' '}
               <input
                 type='date'
                 value={deliveryDate}
@@ -478,6 +512,7 @@ const CartPage = () => {
                 min={getTomorrowDate()}
                 className='w-full p-2 border rounded-md'
               />
+                           {' '}
               <input
                 type='text'
                 value={deliveryAddress}
@@ -485,27 +520,34 @@ const CartPage = () => {
                 placeholder={t('Adresse de livraison')}
                 className='w-full p-2 border rounded-md'
               />
+                           {' '}
               <textarea
                 value={deliveryDetails}
                 onChange={(e) => setDeliveryDetails(e.target.value)}
                 placeholder={t('Détails supplémentaires (optionnel)')}
                 className='w-full p-2 border rounded-md'
               />
-
-              {/* Choix méthode paiement (inchangé) */}
+                            {/* Choix méthode paiement (inchangé) */}           
+               {' '}
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className='w-full p-2 border rounded-md'
               >
-                <option value='cash'>💵 {t('Paiement à la livraison')}</option>
-                <option value='orange-money'>📱 {t('Orange Money')}</option>
-                <option value='mtn-momo'>📱 {t('MTN Mobile Money')}</option>
-                <option value='card'>💳 {t('Carte Bancaire')}</option>
+                               {' '}
+                <option value='cash'>💵 {t('Paiement à la livraison')}</option> 
+                             {' '}
+                <option value='orange-money'>📱 {t('Orange Money')}</option>   
+                           {' '}
+                <option value='mtn-momo'>📱 {t('MTN Mobile Money')}</option>   
+                           {' '}
+                <option value='card'>💳 {t('Carte Bancaire')}</option>         
+                   {' '}
               </select>
+                         {' '}
             </div>
-
-            {/* ✅ AJOUT : Affichage du statut de paiement */}
+                        {/* ✅ AJOUT : Affichage du statut de paiement */}     
+                 {' '}
             {paymentStatus.state !== 'idle' && paymentStatus.message && (
               <div
                 className={`mt-4 p-3 rounded-lg font-medium ${
@@ -520,17 +562,21 @@ const CartPage = () => {
                     : 'bg-blue-100 text-blue-700'
                 }`}
               >
-                {paymentStatus.message}
+                                {paymentStatus.message}             {' '}
               </div>
             )}
-
+                       {' '}
             <div className='mt-6'>
+                           {' '}
               <h3 className='text-2xl font-bold'>
-                {t('Total de la commande')}
+                                {t('Total de la commande')}             {' '}
               </h3>
+                           {' '}
               <p className='text-4xl font-extrabold text-red-600'>
-                {calculateTotal().toLocaleString('fr-CM')} Fcfa
+                                {calculateTotal().toLocaleString('fr-CM')} Fcfa
+                             {' '}
               </p>
+                           {' '}
               <motion.button
                 onClick={handleValidateOrder}
                 className='w-full mt-6 bg-red-600 text-white font-bold py-3 px-6 rounded-full disabled:opacity-50'
@@ -538,17 +584,24 @@ const CartPage = () => {
                 whileTap={{ scale: 0.98 }}
                 disabled={isValidationDisabled} // 👈 Utilisation du nouveau statut
               >
+                               {' '}
                 {paymentStatus.state === 'pending'
                   ? t('En attente de confirmation...')
                   : paymentStatus.state === 'processing' ||
                     paymentStatus.state === 'loading'
                   ? t('Initialisation...')
                   : t('Valider la commande')}
+                             {' '}
               </motion.button>
+                         {' '}
             </div>
+                     {' '}
           </div>
+                 {' '}
         </div>
+             {' '}
       </div>
+         {' '}
     </motion.div>
   )
 }
