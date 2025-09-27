@@ -255,12 +255,23 @@ const CartPage = () => {
             {t('Votre Panier')}
           </h1>
           <motion.button
-            onClick={() => navigate('/products')}
-            className='flex items-center text-red-600 font-semibold'
-            whileHover={{ x: -5 }}
+            onClick={handleValidateOrder}
+            disabled={isDisabled}
+            className={`w-full mt-4 py-3 rounded-full flex items-center justify-center font-bold ${
+              isDisabled
+                ? 'bg-gray-400'
+                : 'bg-red-600 text-white hover:bg-red-700'
+            }`}
+            whileTap={{ scale: 0.95 }}
           >
-            <ArrowLeft size={20} className='mr-2' />
-            {t('Continuer mes achats')}
+            {paymentStatus.state === 'pending' && (
+              <motion.div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
+            )}
+            {paymentStatus.state === 'pending'
+              ? 'Traitement en cours…'
+              : paymentStatus.state === 'error'
+              ? 'Réessayer'
+              : 'Valider la commande'}
           </motion.button>
         </div>
 

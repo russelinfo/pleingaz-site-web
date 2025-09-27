@@ -36,15 +36,17 @@ function formatPhone(phone) {
 // ------------------------------------------------------------------
 router.post('/initialize', async (req, res) => {
   try {
-    let { amount, email, phone, orderId, paymentMethod } = req.body
-    if (!amount || !email || !phone || !orderId || !paymentMethod) {
-      return res.status(400).json({ error: 'Champs requis manquants' })
+    const { amount, email, phone, orderId, paymentMethod } = req.body
+    if (!amount || !email || !phone || !orderId) {
+      return res
+        .status(400)
+        .json({ error: 'amount, email, phone et orderId sont requis' })
     }
 
-    phone = formatPhone(phone)
+    // 1) Créer une référence marchande unique
     const merchantReference = crypto.randomUUID()
 
-    // Enregistrer transaction (UUID = merchantReference)
+    // 2) Sauvegarde en BD
     const transaction = await prisma.transaction.create({
       data: {
         amount,
@@ -52,52 +54,52 @@ router.post('/initialize', async (req, res) => {
         customerPhone: phone,
         orderId,
         status: 'pending',
-        merchantReference,
+        reference: merchantReference, // ✅ cohérent
       },
     })
 
-    // Appel API NotchPay
-    const response = await fetch('https://api.notchpay.co/payments', {
-      method: 'POST',
-      headers: {
-        Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount,
-        currency: 'XAF',
-        reference: merchantReference, // référence interne
-        phone,
-        email,
-        payment_method: paymentMethod,
-        description: `Commande PleinGaz #${orderId}`,
-        callback:
-          'https://pleingaz-site-web.onrender.com/api/payments/callback',
-      }),
-    })
-    const data = await response.json()
-    console.log('✅ Init NotchPay:', data)
-
-    if (response.status === 201 && data.transaction?.reference) {
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: {
-          reference: data.transaction.reference,
-          notchData: data.transaction,
+    // 3) Appel NotchPay
+    const notchPayResponse = await fetch(
+      'https://api.notchpay.co/payments/initialize',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
+          'Content-Type': 'application/json',
         },
-      })
-      return res.json({
+        body: JSON.stringify({
+          amount,
+          currency: 'XAF',
+          reference: merchantReference, // ✅ on force la même
+          phone,
+          email,
+          callback: `${process.env.BASE_URL}/api/payments/callback`,
+          channel: paymentMethod, // momo.mtn, momo.orange, card
+          description: 'Paiement PleinGaz',
+        }),
+      }
+    )
+
+    const notchPayData = await notchPayResponse.json()
+    console.log('✅ NotchPay response:', notchPayData)
+
+    if (notchPayData?.transaction?.reference) {
+      res.json({
         success: true,
-        reference: data.transaction.reference,
-        authorization_url: data.authorization_url || null,
-        status: data.transaction.status,
+        reference: merchantReference,
+        authorization_url: notchPayData?.authorization_url || null,
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        message: notchPayData.message || 'Erreur NotchPay',
       })
     }
-
-    return res.status(500).json({ success: false, message: data.message })
   } catch (err) {
-    console.error('❌ Init error:', err)
-    res.status(500).json({ error: 'Erreur init paiement' })
+    console.error('❌ Payment initialize error:', err)
+    return res
+      .status(500)
+      .json({ error: "Erreur lors de l'initialisation du paiement" })
   }
 })
 
