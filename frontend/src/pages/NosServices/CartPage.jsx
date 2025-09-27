@@ -1,4 +1,3 @@
-// src/components/CartPage.jsx
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
@@ -6,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useTranslation } from 'react-i18next'
 
-// Import images locales
+// --- Images ---
 import btn6 from '../../assets/images/btn6.png'
 import btn125 from '../../assets/images/btn12.5.png'
 import btn50 from '../../assets/images/btn50.png'
@@ -17,7 +16,7 @@ import detenteur2 from '../../assets/images/detenteur2.png'
 import tuyo from '../../assets/images/tuyo.png'
 import bruleur from '../../assets/images/bruleur.png'
 
-// Mapping fichier → image
+// Mapping image → fichier
 const imageMap = {
   'btn6.png': btn6,
   'btn12.5.png': btn125,
@@ -42,19 +41,18 @@ const CartPage = () => {
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentMethod, setPaymentMethod] = useState('Paiement à la livraison')
 
-  // Produits (chargés depuis backend)
+  // Charger produits depuis API
   const [allProducts, setAllProducts] = useState([])
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(
+        const res = await fetch(
           'https://pleingaz-site-web.onrender.com/api/products'
         )
-        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
-        const data = await response.json()
-        setAllProducts(data)
+        if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`)
+        setAllProducts(await res.json())
       } catch (err) {
         console.error('Erreur chargement produits:', err)
       }
@@ -62,22 +60,15 @@ const CartPage = () => {
     fetchProducts()
   }, [])
 
-  // Récup prix
-  const getPriceValue = (price) => {
-    if (typeof price === 'string') {
-      return parseFloat(price.replace(/[^\d]/g, '')) || 0
-    }
-    if (typeof price === 'number') return price
-    return 0
-  }
+  const getPriceValue = (price) =>
+    typeof price === 'string'
+      ? parseFloat(price.replace(/[^\d]/g, '')) || 0
+      : price || 0
 
-  // Construire le panier
+  // Construire panier
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
-      const parts = cartId.split('-')
-      const productId = parts[0]
-      const priceType = parts[1]
-
+      const [productId, priceType] = cartId.split('-')
       const product = allProducts.find((p) => p.id === productId)
       if (!product) return null
 
@@ -87,17 +78,17 @@ const CartPage = () => {
       if (product.isGasBottle) {
         if (priceType === 'full') {
           itemPrice = getPriceValue(product.fullPrice)
-          itemName = `${product.name} (avec GPL)`
+          itemName = `${t(product.name)} (${t('avec GPL')})`
         } else if (priceType === 'empty') {
           itemPrice = getPriceValue(product.emptyPrice)
-          itemName = `${product.name} (Gaz seul)`
+          itemName = `${t(product.name)} (${t('Gaz seul')})`
         } else {
           itemPrice = getPriceValue(product.price)
-          itemName = `${product.name} (Inconnu)`
+          itemName = `${t(product.name)}`
         }
       } else {
         itemPrice = getPriceValue(product.price)
-        itemName = product.name
+        itemName = t(product.name)
       }
 
       return {
@@ -108,7 +99,7 @@ const CartPage = () => {
         name: itemName,
       }
     })
-    .filter((item) => item !== null)
+    .filter(Boolean)
 
   const calculateTotal = () =>
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -117,32 +108,25 @@ const CartPage = () => {
     handleUpdateCart(id, -cart[id].quantity)
   }
 
-  // --- Validation commande & paiement
+  // ✅ Validation commande
   const handleValidateOrder = async () => {
     if (cartItems.length === 0) {
-      alert('Votre panier est vide.')
+      alert(t('Votre panier est vide.'))
       return
     }
     if (!customerName || !customerEmail || !customerPhone) {
-      alert('Veuillez remplir vos informations.')
+      alert(t('Veuillez remplir vos informations personnelles.'))
       return
     }
     if (!deliveryDate || !deliveryAddress) {
-      alert("Veuillez remplir la date et l'adresse de livraison.")
+      alert(t("Veuillez remplir la date et l'adresse de livraison."))
       return
     }
 
-    // ✅ Normaliser numéro
-    let phone = customerPhone
-    if (!phone.startsWith('+237')) {
-      phone = `+237${phone.replace(/^0+/, '')}`
-    }
-
-    // 1. Créer commande backend
     const orderPayload = {
       customerName,
       customerEmail,
-      customerPhone: phone,
+      customerPhone,
       deliveryAddress,
       deliveryDate,
       paymentMethod,
@@ -155,76 +139,64 @@ const CartPage = () => {
     }
 
     try {
-      const orderRes = await fetch(
-        'https://pleingaz-site-web.onrender.com/api/orders',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderPayload),
-        }
-      )
-      if (!orderRes.ok) throw new Error(`Erreur HTTP ${orderRes.status}`)
-      const orderData = await orderRes.json()
-      const orderId = orderData.id
-
-      // --- Paiement à la livraison
-      if (paymentMethod === 'cash') {
-        emptyCart()
-        navigate('/order-confirmation', { state: { orderDetails: orderData } })
-        return
-      }
-
-      // --- Paiement NotchPay
-      const payRes = await fetch(
-        'https://pleingaz-site-web.onrender.com/api/payments/initialize',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: calculateTotal(),
-            email: customerEmail,
-            phone,
-            orderId,
-            paymentMethod,
-          }),
-        }
-      )
-      const payData = await payRes.json()
-      if (!payData.success) {
-        alert("Erreur lors de l'initialisation du paiement.")
-        return
-      }
-
-      const ref = payData.reference
-
-      if (paymentMethod === 'card' && payData.notch?.authorization_url) {
-        // Redirection bancaire
-        window.location.href = payData.notch.authorization_url
-        return
-      }
-
-      // ✅ Mobile Money → Polling
-      alert('Paiement en cours, vérifiez votre téléphone…')
-
-      const interval = setInterval(async () => {
-        const verifyRes = await fetch(
-          `https://pleingaz-site-web.onrender.com/api/payments/verify/${ref}`
+      // Paiement à la livraison
+      if (paymentMethod === 'Paiement à la livraison') {
+        const res = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
         )
-        const verifyData = await verifyRes.json()
-        const status = verifyData.transaction?.status
-        console.log('Polling status:', status)
+        const data = await res.json()
+        emptyCart()
+        navigate('/order-confirmation', {
+          state: { orderDetails: { ...data, paymentMethod } },
+        })
+      }
 
-        if (status === 'complete') {
-          clearInterval(interval)
-          emptyCart()
-          navigate('/order-confirmation', {
-            state: { orderDetails: orderData },
-          })
-        } else if (status === 'failed') {
-          clearInterval(interval)
-          alert('❌ Paiement échoué.')
+      // Mobile Money
+      else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
+        const orderRes = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
+        )
+        const orderData = await orderRes.json()
+
+        const paymentPayload = {
+          amount: calculateTotal(),
+          phone: customerPhone.startsWith('+237')
+            ? customerPhone
+            : `+237${customerPhone.replace(/^0+/, '')}`,
+          email: customerEmail,
+          name: customerName,
+          orderId: orderData.id,
         }
-      }, 5000)
+
+        const payRes = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/payments/initialize',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentPayload),
+          }
+        )
+        const payData = await payRes.json()
+
+        if (!payData.success) {
+          alert('Erreur lors de l’init paiement')
+          return
+        }
+
+        // ✅ Rediriger vers page de suivi
+        emptyCart()
+        navigate('/payment-status', { state: { reference: payData.reference } })
+      }
     } catch (err) {
       console.error('❌ Erreur commande/paiement:', err)
       alert(`Erreur: ${err.message}`)
@@ -237,9 +209,12 @@ const CartPage = () => {
     return today.toISOString().split('T')[0]
   }
 
-  // --- UI rendu ---
   return (
-    <motion.div className='bg-gray-50 min-h-screen pt-24 pb-16'>
+    <motion.div
+      className='bg-gray-50 min-h-screen pt-24 pb-16'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
       <div className='container mx-auto px-4'>
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
@@ -248,6 +223,7 @@ const CartPage = () => {
           <motion.button
             onClick={() => navigate('/products')}
             className='flex items-center text-red-600 font-semibold hover:text-red-700'
+            whileHover={{ x: -5 }}
           >
             <ArrowLeft size={20} className='mr-2' />
             {t('Continuer mes achats')}
@@ -260,134 +236,113 @@ const CartPage = () => {
             <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
               {t('Récapitulatif de votre commande')}
             </h2>
-            <div className='space-y-6'>
-              {cartItems.length > 0 ? (
-                cartItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    className='flex items-center border-b pb-4'
+            {cartItems.map((item) => (
+              <motion.div
+                key={item.id}
+                className='flex items-center border-b pb-4'
+              >
+                <img
+                  src={imageMap[item.image]}
+                  alt={item.name}
+                  className='w-20 h-20 object-contain mr-4'
+                />
+                <div className='flex-1'>
+                  <h3 className='font-semibold'>{item.name}</h3>
+                  <p>
+                    {item.quantity} x {item.price.toLocaleString('fr-CM')} Fcfa
+                  </p>
+                </div>
+                <div className='text-right'>
+                  <p className='text-xl font-bold text-red-600'>
+                    {(item.price * item.quantity).toLocaleString('fr-CM')} Fcfa
+                  </p>
+                  <div className='flex items-center mt-2'>
+                    <button
+                      onClick={() => handleUpdateCart(item.id, -1)}
+                      disabled={item.quantity <= 1}
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className='mx-2'>{item.quantity}</span>
+                    <button onClick={() => handleUpdateCart(item.id, 1)}>
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveItem(item.id)}
+                    className='text-red-500 mt-2'
                   >
-                    <img
-                      src={imageMap[item.image]}
-                      alt={item.name}
-                      className='w-20 h-20 object-contain mr-4'
-                    />
-                    <div className='flex-1'>
-                      <h3 className='font-semibold text-lg'>{item.name}</h3>
-                      <p>
-                        {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
-                        Fcfa
-                      </p>
-                    </div>
-                    <div className='text-right flex flex-col items-end'>
-                      <p className='text-xl font-bold text-red-600'>
-                        {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
-                        Fcfa
-                      </p>
-                      <div className='flex items-center space-x-2 mt-2'>
-                        <button
-                          onClick={() => handleUpdateCart(item.id, -1)}
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className='font-bold'>{item.quantity}</span>
-                        <button onClick={() => handleUpdateCart(item.id, 1)}>
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className='text-red-500 hover:text-red-700 mt-2'
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <p className='text-center text-gray-500'>
-                  {t('Votre panier est vide.')}
-                </p>
-              )}
-            </div>
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
           </div>
 
-          {/* Livraison + Paiement */}
+          {/* Livraison */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
-            <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
+            <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
               {t('Informations client et livraison')}
             </h2>
-            <div className='space-y-4'>
-              <input
-                type='text'
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder={t('Votre nom complet')}
-                className='w-full p-2 border rounded-md'
-              />
-              <input
-                type='email'
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder={t('Votre email')}
-                className='w-full p-2 border rounded-md'
-              />
-              <input
-                type='tel'
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder={t('Votre numéro de téléphone')}
-                className='w-full p-2 border rounded-md'
-              />
-              <input
-                type='date'
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-                min={getTomorrowDate()}
-                className='w-full p-2 border rounded-md'
-              />
-              <input
-                type='text'
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder={t('Adresse de livraison')}
-                className='w-full p-2 border rounded-md'
-              />
-              <textarea
-                value={deliveryDetails}
-                onChange={(e) => setDeliveryDetails(e.target.value)}
-                placeholder={t('Détails supplémentaires')}
-                rows='3'
-                className='w-full p-2 border rounded-md'
-              />
-
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className='w-full p-2 border rounded-md'
-              >
-                <option value='cash'>{t('Paiement à la livraison')}</option>
-                <option value='momo.orange'>{t('Orange Money')}</option>
-                <option value='momo.mtn'>{t('MTN Mobile Money')}</option>
-                <option value='card'>{t('Carte bancaire')}</option>
-              </select>
-            </div>
-
-            <div className='mt-8'>
-              <h3 className='text-2xl font-bold text-gray-800'>
-                {t('Total de la commande')}
-              </h3>
-              <p className='text-4xl font-extrabold text-red-600 mt-2'>
-                {calculateTotal().toLocaleString('fr-CM')} Fcfa
-              </p>
-              <motion.button
-                onClick={handleValidateOrder}
-                className='w-full mt-6 bg-red-600 text-white font-bold py-4 px-6 rounded-full'
-              >
-                {t('Valider la commande')}
-              </motion.button>
-            </div>
+            <input
+              type='text'
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder={t('Votre nom complet')}
+              className='w-full p-2 border mb-2'
+            />
+            <input
+              type='email'
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              placeholder={t('Votre email')}
+              className='w-full p-2 border mb-2'
+            />
+            <input
+              type='tel'
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder={t('Votre numéro de téléphone')}
+              className='w-full p-2 border mb-2'
+            />
+            <input
+              type='date'
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              min={getTomorrowDate()}
+              className='w-full p-2 border mb-2'
+            />
+            <input
+              type='text'
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              placeholder={t('Adresse de livraison')}
+              className='w-full p-2 border mb-2'
+            />
+            <textarea
+              value={deliveryDetails}
+              onChange={(e) => setDeliveryDetails(e.target.value)}
+              placeholder={t('Détails supplémentaires (optionnel)')}
+              rows='3'
+              className='w-full p-2 border mb-2'
+            />
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className='w-full p-2 border mb-4'
+            >
+              <option>Paiement à la livraison</option>
+              <option>Mobile Money (MTN/Orange)</option>
+            </select>
+            <h3 className='text-2xl font-bold'>
+              {t('Total')}: {calculateTotal().toLocaleString('fr-CM')} Fcfa
+            </h3>
+            <motion.button
+              onClick={handleValidateOrder}
+              className='w-full mt-6 bg-red-600 text-white py-4 rounded-full'
+            >
+              {t('Valider la commande')}
+            </motion.button>
           </div>
         </div>
       </div>
