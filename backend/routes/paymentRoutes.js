@@ -8,9 +8,7 @@ import prisma from '../prismaClient.js'
 dotenv.config()
 const router = express.Router()
 
-/**
- * Helper: Vérification sécurisée de la signature HMAC SHA256 du webhook.
- */
+/** helper signature verify (HMAC SHA256) */
 function safeHexCompare(aHex, bHex) {
   try {
     const a = Buffer.from(aHex, 'hex')
@@ -22,12 +20,16 @@ function safeHexCompare(aHex, bHex) {
   }
 }
 
+// 🎯 Nous allons utiliser le champ 'reference' de la DB pour stocker
+// la référence NotchPay (trx.xxx) afin que le polling fonctionne.
+// L'UUID interne sera utilisé comme merchant_reference dans NotchPay.
+
 // ------------------------------------------------------------------
 // POST /api/payments/initialize
 // ------------------------------------------------------------------
 router.post('/initialize', async (req, res) => {
   try {
-    // Les champs sont bien extraits du corps de la requête (frontend)
+    // Note : On a besoin de paymentMethod ici pour l'USSD push
     const { amount, email, phone, orderId, paymentMethod } = req.body
 
     if (!amount || !email || !phone || !orderId || !paymentMethod) {
@@ -38,11 +40,10 @@ router.post('/initialize', async (req, res) => {
         })
     }
 
-    // Créer une référence UUID interne (merchant_reference)
+    // Créer une référence UUID interne pour le tracking (merchant_reference)
     const internalReference = crypto.randomUUID()
 
     // 1) Créer la transaction en DB avec l'UUID interne
-    // NOTE: On stocke initialement l'UUID interne dans le champ 'reference'.
     let transaction = await prisma.transaction.create({
       data: {
         amount,
@@ -50,32 +51,32 @@ router.post('/initialize', async (req, res) => {
         customerPhone: phone,
         orderId,
         status: 'pending',
-        reference: internalReference,
+        reference: internalReference, // Stocke l'UUID interne ici initialement
       },
     })
-
-    const requestBody = {
-      amount,
-      currency: 'XAF',
-      reference: internalReference, // Notre référence interne (merchant_reference)
-      phone,
-      email,
-      payment_method: paymentMethod, // L'élément CRUCIAL pour le Push USSD (e.g., 'momo.mtn')
-      description: `Commande PleinGaz #${orderId}`,
-      callback: 'https://pleingaz-site-web.onrender.com/api/payments/callback',
-    }
-
-    console.log('➡️ Envoi à NotchPay:', JSON.stringify(requestBody, null, 2)) // LOG POUR DEBUG
 
     // 2) Appel NotchPay
-    const notchPayResponse = await fetch('https://api.notchpay.co/payments', {
-      method: 'POST',
-      headers: {
-        Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    })
+    const notchPayResponse = await fetch(
+      'https://api.notchpay.co/payments', // ✅ Endpoint correct pour USSD Push
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount,
+          currency: 'XAF',
+          reference: internalReference, // C'est votre merchant_reference
+          phone,
+          email,
+          payment_method: paymentMethod, // ✅ Ajout du mode de paiement
+          description: `Commande PleinGaz #${orderId}`,
+          callback:
+            'https://pleingaz-site-web.onrender.com/api/payments/callback',
+        }),
+      }
+    )
 
     const notchPayData = await notchPayResponse.json()
     console.log('✅ NotchPay response:', JSON.stringify(notchPayData, null, 2))
@@ -84,23 +85,24 @@ router.post('/initialize', async (req, res) => {
       notchPayResponse.status === 201 &&
       notchPayData.transaction?.reference
     ) {
-      const notchReference = notchPayData.transaction.reference // La référence 'trx.xxx'
+      const notchReference = notchPayData.transaction.reference
 
-      // 🚨 CORRECTION MAJEURE: Mettre à jour la DB avec la VRAIE référence NotchPay (trx.xxx)
-      // pour que le polling (/verify) fonctionne avec cette référence.
+      // 🚨 CORRECTION MAJEURE : Mettre à jour la DB avec la VRAIE référence NotchPay
+      // pour que le polling (/verify) fonctionne.
       await prisma.transaction.update({
         where: { reference: internalReference }, // Cherche par l'UUID interne
         data: {
-          reference: notchReference, // Stocke la référence NotchPay (trx.xxx)
+          // Stocke la référence NotchPay (trx.xxx) pour le polling
+          reference: notchReference,
           notchData: notchPayData.transaction,
+          // On pourrait ajouter un champ 'internalRef' pour garder l'UUID, mais on simplifie ici.
         },
       })
 
       // 3) Retourne la référence NotchPay au front pour le polling
       res.json({
         success: true,
-        // Pour le Push USSD réussi, authorization_url devrait être null.
-        // S'il y a une URL, c'est qu'il y a un problème de payment_method ou de numéro.
+        // Pour le Polling USSD : l'URL est souvent nulle, on renvoie la référence
         authorization_url: notchPayData.authorization_url,
         reference: notchReference, // Utilisez cette référence pour le Polling
         status: notchPayData.transaction.status,
@@ -111,12 +113,7 @@ router.post('/initialize', async (req, res) => {
         "Échec de l'initialisation de NotchPay avec l'erreur:",
         notchPayData.message
       )
-      // Si NotchPay échoue, on marque la transaction en DB comme échouée
-      await prisma.transaction.update({
-        where: { reference: internalReference },
-        data: { status: 'failed', notchData: notchPayData },
-      })
-
+      // Revert the transaction status to failed or delete it if possible
       res.status(500).json({
         success: false,
         message:
@@ -132,13 +129,14 @@ router.post('/initialize', async (req, res) => {
 })
 
 // ------------------------------------------------------------------
-// GET /api/payments/verify/:reference (Polling)
+// GET /api/payments/verify/:reference
 // ------------------------------------------------------------------
 router.get('/verify/:reference', async (req, res) => {
   try {
-    // La 'reference' ici est la référence NotchPay (trx.xxx)
+    // La 'reference' ici est maintenant la référence NotchPay (trx.xxx)
     const { reference } = req.params
 
+    // Le code d'appel à NotchPay est correct
     const response = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
@@ -146,25 +144,29 @@ router.get('/verify/:reference', async (req, res) => {
       }
     )
     const data = await response.json()
-    console.log('✅ Payment verification (Polling):', data)
+    console.log('✅ Payment verification:', data)
 
+    // Si complete -> mettre à jour la DB
     const txRef = data.transaction?.reference || reference
 
-    // Si complet -> mettre à jour la DB
     if (data.transaction?.status === 'complete') {
-      // On cherche par txRef qui est la référence NotchPay
-      const transaction = await prisma.transaction.update({
+      // 🚨 CORRECTION : On cherche par txRef qui est la référence NotchPay (stockée dans le champ 'reference' de la DB)
+      await prisma.transaction.updateMany({
         where: { reference: txRef },
-        data: {
-          status: 'complete',
-          notchData: data.transaction,
-          // Mettre à jour la commande si elle est liée (assurez-vous d'avoir bien 'include: { order: true }' si vous utilisez 'update')
-          order: { update: { status: 'paid' } },
-        },
+        data: { status: 'complete', notchData: data },
       })
+      // Mise à jour de la commande associée (ajoutez cette étape si elle est manquante)
+      const transaction = await prisma.transaction.findFirst({
+        where: { reference: txRef },
+      })
+      if (transaction && transaction.orderId) {
+        await prisma.order.update({
+          where: { id: transaction.orderId },
+          data: { status: 'paid' },
+        })
+      }
     }
 
-    // Le polling renvoie toujours le statut actuel à l'interface
     return res.json({
       status: data.transaction?.status || 'pending',
       message: data.message || 'Verification successful',
@@ -186,10 +188,12 @@ router.post(
   express.raw({ type: 'application/json' }),
   async (req, res) => {
     try {
-      // 1. Vérification de la signature
+      // ... (vérification de la signature inchangée) ...
       const signatureHeader = req.headers['x-notch-signature'] || ''
       const payloadRaw = req.body ? req.body.toString('utf8') : ''
       const secret = process.env.NOTCHPAY_WEBHOOK_HASH
+
+      // ... (log de debug et vérification de signature inchangée) ...
 
       const signature = signatureHeader.startsWith('sha256=')
         ? signatureHeader.split('=')[1]
@@ -205,24 +209,27 @@ router.post(
       }
 
       const event = JSON.parse(payloadRaw)
-      console.log('📩 Webhook validé:', event.type, event.data || '') // Correction: use event.type directly
+      console.log('📩 Webhook validé:', event?.type, event?.data || '')
 
+      // 🚨 CORRECTION : On utilise le merchant_reference (votre UUID interne)
+      const merchantRef = event?.data?.merchant_reference
       const notchRef = event?.data?.reference // La référence trx.xxx de NotchPay
 
-      if (!notchRef) {
-        console.log('ℹ️ Webhook reçu sans référence NotchPay nécessaire.')
+      if (!merchantRef || !notchRef) {
+        console.log(
+          'ℹ️ Webhook reçu sans références nécessaires (merchant_reference ou Notch Reference).'
+        )
         return res.status(200).send('Webhook sans références')
       }
 
-      // 2. Traitement des événements
+      // Le webhook est le moyen le plus sûr de mettre à jour la DB.
       if (event.type === 'payment.complete') {
-        // Le webhook est le moyen le plus fiable de confirmer. On met à jour.
         await prisma.transaction.updateMany({
-          where: { reference: notchRef },
+          where: { reference: notchRef }, // On cherche la référence NotchPay si elle a été mise à jour à l'initialize
           data: {
             status: 'complete',
             notchData: event,
-            // Utiliser une syntaxe pour l'update de la commande (selon votre modèle Prisma)
+            // S'assurer de mettre à jour le statut de la commande liée
             order: { update: { status: 'paid' } },
           },
         })
@@ -237,9 +244,6 @@ router.post(
           },
         })
         console.log('❌ Transaction mise à jour failed pour', notchRef)
-      } else if (event.type === 'payment.created') {
-        // Ne rien faire de plus, la transaction est déjà 'pending'
-        console.log('ℹ️ Événement reçu: transaction créée (pending).')
       } else {
         console.log('ℹ️ Événement reçu non géré:', event.type)
       }
@@ -253,17 +257,12 @@ router.post(
 )
 
 // ------------------------------------------------------------------
-// GET /api/payments/callback (Redirection client)
+// GET /api/payments/callback
 // ------------------------------------------------------------------
 router.get('/callback', async (req, res) => {
-  const reference = req.query.reference // La référence NotchPay (trx.xxx)
-
-  if (!reference) {
-    return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
-  }
-
+  const reference = req.query.reference
   try {
-    // Vérification de sécurité après redirection
+    // 🚨 CORRECTION : La vérification est correcte, elle utilise la référence NotchPay (trx.xxx)
     const response = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
@@ -273,15 +272,12 @@ router.get('/callback', async (req, res) => {
       }
     )
     const data = await response.json()
-    console.log(
-      '🔎 NotchPay verify response (Callback):',
-      JSON.stringify(data, null, 2)
-    )
+    console.log('🔎 NotchPay verify response:', JSON.stringify(data, null, 2))
 
     if (data.transaction?.status === 'complete') {
-      const txRef = data.transaction.reference || reference
+      const txRef = data.transaction.reference || reference // C'est la référence NotchPay (trx.xxx)
 
-      // Mise à jour de la transaction (même si le webhook l'a déjà fait, c'est une sécurité)
+      // On cherche par la référence NotchPay (txRef)
       const transaction = await prisma.transaction.findUnique({
         where: { reference: txRef },
         include: { order: true },
@@ -292,7 +288,7 @@ router.get('/callback', async (req, res) => {
           where: { reference: txRef },
           data: {
             status: 'complete',
-            notchData: data.transaction,
+            notchData: data,
             order: { update: { status: 'paid' } },
           },
         })
@@ -301,16 +297,11 @@ router.get('/callback', async (req, res) => {
         `https://pleingaz-site-web.vercel.app/order-confirmation?ref=${txRef}`
       )
     } else {
-      // Redirection vers la page panier/échec si la transaction n'est pas complète
-      return res.redirect(
-        `https://pleingaz-site-web.vercel.app/cart?status=failed`
-      )
+      return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
     }
   } catch (error) {
-    console.error('❌ Erreur de vérification du paiement (Callback):', error)
-    return res.redirect(
-      `https://pleingaz-site-web.vercel.app/cart?status=error`
-    )
+    console.error('❌ Erreur de vérification du paiement:', error)
+    return res.redirect(`https://pleingaz-site-web.vercel.app/cart`)
   }
 })
 
