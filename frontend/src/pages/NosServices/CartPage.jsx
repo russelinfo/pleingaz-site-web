@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useTranslation } from 'react-i18next'
 
-// Import des images locales (inchangé)
+// Import des images locales
 import btn6 from '../../assets/images/btn6.png'
 import btn125 from '../../assets/images/btn12.5.png'
 import btn50 from '../../assets/images/btn50.png'
@@ -17,7 +17,7 @@ import detenteur2 from '../../assets/images/detenteur2.png'
 import tuyo from '../../assets/images/tuyo.png'
 import bruleur from '../../assets/images/bruleur.png'
 
-// Carte fichier → image (inchangé)
+// Carte fichier → image
 const imageMap = {
   'btn6.png': btn6,
   'btn12.5.png': btn125,
@@ -29,9 +29,6 @@ const imageMap = {
   'tuyo.png': tuyo,
   'bruleur.png': bruleur,
 }
-
-// Constante pour le backend URL (à adapter si nécessaire)
-const BACKEND_URL = 'https://pleingaz-site-web.onrender.com'
 
 const CartPage = () => {
   const navigate = useNavigate()
@@ -47,19 +44,14 @@ const CartPage = () => {
   const [deliveryDetails, setDeliveryDetails] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cash')
 
-  // ✅ NOUVEL ÉTAT : Gérer le statut du paiement en ligne
-  const [paymentStatus, setPaymentStatus] = useState({
-    state: 'idle',
-    message: '',
-  })
-
-  // Charger produits depuis API (inchangé)
+  // Charger produits depuis API
   const [allProducts, setAllProducts] = useState([])
   useEffect(() => {
-    // ... (Logique fetchProducts inchangée) ...
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/products`)
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/products'
+        )
         if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
         const data = await response.json()
         setAllProducts(data)
@@ -69,7 +61,6 @@ const CartPage = () => {
     }
     fetchProducts()
   }, [])
-  // ... (Fonctions getPriceValue, cartItems, calculateTotal, handleRemoveItem inchangées) ...
 
   const getPriceValue = (price) => {
     if (typeof price === 'string') {
@@ -79,7 +70,7 @@ const CartPage = () => {
     return 0
   }
 
-  // Construire items panier (simplifié pour la clarté)
+  // Construire items panier
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
       const [productId, priceType] = cartId.split('-')
@@ -87,11 +78,15 @@ const CartPage = () => {
       if (!product) return null
 
       let itemPrice = 0
+      let itemName = product.name
+
       if (product.isGasBottle) {
         if (priceType === 'full') {
           itemPrice = getPriceValue(product.fullPrice)
+          itemName = `${t(product.name)} (${t('avec GPL')})`
         } else if (priceType === 'empty') {
           itemPrice = getPriceValue(product.emptyPrice)
+          itemName = `${t(product.name)} (${t('Gaz seul')})`
         } else {
           itemPrice = getPriceValue(product.price)
         }
@@ -104,7 +99,7 @@ const CartPage = () => {
         id: cartId,
         quantity: cart[cartId].quantity,
         price: itemPrice,
-        name: product.name, // Nom non traduit ici pour simplifier
+        name: itemName,
       }
     })
     .filter((item) => item !== null)
@@ -116,51 +111,8 @@ const CartPage = () => {
     handleUpdateCart(id, -cart[id].quantity)
   }
 
-  // Fonction de polling pour vérifier le statut du paiement
-  const pollPaymentStatus = (reference) => {
-    return new Promise((resolve) => {
-      const interval = setInterval(async () => {
-        try {
-          const response = await fetch(
-            `${BACKEND_URL}/api/payments/verify/${reference}`
-          )
-          const data = await response.json()
-
-          if (data.status === 'complete') {
-            clearInterval(interval)
-            resolve('complete')
-          } else if (data.status === 'failed' || data.status === 'canceled') {
-            clearInterval(interval)
-            resolve('failed')
-          } else {
-            // Statut 'pending', continuer le polling
-            setPaymentStatus({
-              state: 'pending',
-              message: t(
-                'Confirmation en cours. Veuillez valider la demande sur votre téléphone'
-              ),
-            })
-          }
-        } catch (error) {
-          console.error('Erreur lors du polling:', error)
-          clearInterval(interval)
-          resolve('error')
-        }
-      }, 5000) // Vérifie toutes les 5 secondes
-
-      // Arrêter le polling après un certain délai (ex: 5 minutes = 300000 ms)
-      setTimeout(() => {
-        clearInterval(interval)
-        if (paymentStatus.state === 'pending') {
-          resolve('timeout')
-        }
-      }, 300000)
-    })
-  }
-
-  // ✅ MISE À JOUR : Validation de la commande
+  // ✅ Validation de la commande
   const handleValidateOrder = async () => {
-    // ... (Validations inchangées) ...
     if (cartItems.length === 0) {
       alert(t('Votre panier est vide.'))
       return
@@ -189,153 +141,66 @@ const CartPage = () => {
       totalAmount: calculateTotal(),
     }
 
-    setPaymentStatus({ state: 'loading', message: '' }) // Début du processus
-
     try {
-      // 1. Créer la commande dans votre base de données (étape nécessaire pour obtenir un orderId)
-      const orderResponse = await fetch(`${BACKEND_URL}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload),
-      })
-      const orderData = await orderResponse.json()
-      const orderId = orderData.id
-
       // Paiement à la livraison
       if (paymentMethod === 'cash') {
+        const response = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
+        )
+        const data = await response.json()
+
         emptyCart()
         navigate('/order-confirmation', {
-          state: {
-            orderDetails: {
-              ...orderPayload,
-              orderId: orderId,
-              paymentStatus: 'CASH_ON_DELIVERY',
-            },
-          },
+          state: { orderDetails: { ...orderPayload, orderId: data.id } },
         })
-        return
-      }
-
-      // 2. Paiements Mobile Money / Carte (NotchPay)
-
-      // ✅ Adaptation du paymentMethod pour NotchPay
-      let notchPaymentMethod = ''
-      if (paymentMethod === 'mtn-momo') {
-        notchPaymentMethod = 'momo.mtn'
-      } else if (paymentMethod === 'orange-money') {
-        notchPaymentMethod = 'momo.orange'
-      } else if (paymentMethod === 'card') {
-        notchPaymentMethod = 'card'
       } else {
-        throw new Error(t('Méthode de paiement en ligne non supportée.'))
-      }
-
-      const paymentPayload = {
-        amount: calculateTotal(),
-        phone: customerPhone,
-        email: customerEmail,
-        orderId: orderId,
-        paymentMethod: notchPaymentMethod, // ✅ On envoie le format NotchPay
-      }
-
-      setPaymentStatus({
-        state: 'processing',
-        message: t('Initialisation du paiement en cours...'),
-      })
-
-      // 3. Initialiser la transaction NotchPay (sur votre backend /payments)
-      const paymentResponse = await fetch(
-        `${BACKEND_URL}/api/payments/initialize`, // L'endpoint que vous avez adapté pour POST /payments
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentPayload),
-        }
-      )
-      const paymentData = await paymentResponse.json()
-
-      if (!paymentResponse.ok || !paymentData.reference) {
-        throw new Error(
-          paymentData.message || t("Échec de l'initialisation du paiement.")
+        // Autres paiements (mobile / carte)
+        const orderResponse = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload),
+          }
         )
-      }
+        const orderData = await orderResponse.json()
 
-      const transactionReference = paymentData.reference
+        const paymentPayload = {
+          amount: calculateTotal(),
+          phone: customerPhone,
+          email: customerEmail,
+          orderId: orderData.id,
+          paymentMethod, // orange-money / mtn-momo / card
+        }
 
-      // CAS 1: Mobile Money Direct (USSD Push)
-      if (
-        notchPaymentMethod === 'momo.mtn' ||
-        notchPaymentMethod === 'momo.orange'
-      ) {
-        setPaymentStatus({
-          state: 'pending',
-          message: t(
-            'Demande envoyée ! Veuillez confirmer le paiement sur votre téléphone mobile.'
-          ),
-        })
+        const paymentResponse = await fetch(
+          'https://pleingaz-site-web.onrender.com/api/payments/initialize',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentPayload),
+          }
+        )
+        const paymentData = await paymentResponse.json()
+        console.log('✅ Payment initialized:', paymentData)
 
-        // Démarrer le polling
-        const finalStatus = await pollPaymentStatus(transactionReference)
-
-        if (finalStatus === 'complete') {
-          setPaymentStatus({
-            state: 'success',
-            message: t('Paiement confirmé ! Redirection en cours...'),
-          })
+        if (paymentData.authorization_url) {
           emptyCart()
-          navigate('/order-confirmation', {
-            state: {
-              orderDetails: {
-                ...orderPayload,
-                orderId,
-                paymentStatus: 'COMPLETE',
-              },
-            },
-          })
-        } else if (
-          finalStatus === 'failed' ||
-          finalStatus === 'canceled' ||
-          finalStatus === 'timeout'
-        ) {
-          setPaymentStatus({
-            state: 'error',
-            message: t('Le paiement a échoué ou a expiré. Veuillez réessayer.'),
-          })
+          window.location.href = paymentData.authorization_url
+        } else {
+          alert(
+            'Veuillez confirmer le paiement sur votre téléphone ou carte bancaire.'
+          )
         }
-      }
-      // CAS 2: Redirection (Carte Bancaire)
-      else if (paymentData.authorization_url) {
-        setPaymentStatus({
-          state: 'redirect',
-          message: t('Redirection vers la plateforme de paiement...'),
-        })
-        emptyCart() // Vider le panier avant de quitter
-        window.location.href = paymentData.authorization_url
-      } else {
-        // Si on n'a ni USSD push ni URL de redirection, c'est une erreur inattendue.
-        throw new Error(
-          t('Le système de paiement a renvoyé une réponse inattendue.')
-        )
       }
     } catch (err) {
       console.error('❌ Erreur commande/paiement:', err)
-      setPaymentStatus({
-        state: 'error',
-        message: err.message || t('Une erreur fatale est survenue.'),
-      })
-    } finally {
-      // En cas d'erreur ou de succès du cash, on réinitialise l'état
-      if (
-        paymentMethod === 'cash' ||
-        paymentStatus.state === 'success' ||
-        paymentStatus.state === 'error'
-      ) {
-        // On ne réinitialise pas si on est en "pending" pour laisser le polling continuer
-        if (paymentStatus.state !== 'pending') {
-          // setPaymentStatus({ state: 'idle', message: '' });
-          // Laisser le message d'erreur/succès affiché jusqu'à ce que l'utilisateur recharge/quitte
-        }
-      }
+      alert(`Erreur: ${err.message}`)
     }
   }
 
@@ -345,14 +210,6 @@ const CartPage = () => {
     return today.toISOString().split('T')[0]
   }
 
-  // Fonction pour déterminer si le bouton de validation doit être désactivé
-  const isValidationDisabled =
-    cartItems.length === 0 ||
-    paymentStatus.state === 'loading' ||
-    paymentStatus.state === 'processing' ||
-    paymentStatus.state === 'pending' ||
-    paymentStatus.state === 'redirect'
-
   return (
     <motion.div
       className='bg-gray-50 min-h-screen pt-24 pb-16'
@@ -361,7 +218,6 @@ const CartPage = () => {
       transition={{ duration: 0.5 }}
     >
       <div className='container mx-auto px-4'>
-        {/* ... (En-tête inchangé) ... */}
         <div className='flex items-center justify-between mb-8'>
           <h1 className='text-4xl font-extrabold text-gray-800'>
             {t('Votre Panier')}
@@ -377,13 +233,12 @@ const CartPage = () => {
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Liste panier (inchangée) */}
+          {/* Liste panier */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
             <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
               {t('Récapitulatif de votre commande')}
             </h2>
             <div className='space-y-6'>
-              {/* ... (Affichage des articles du panier inchangé) ... */}
               {cartItems.length > 0 ? (
                 cartItems.map((item) => (
                   <motion.div
@@ -392,7 +247,6 @@ const CartPage = () => {
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                   >
-                    {/* ... (détails de l'article) ... */}
                     <img
                       src={imageMap[item.image]}
                       alt={item.name}
@@ -449,7 +303,6 @@ const CartPage = () => {
               {t('Informations client et livraison')}
             </h2>
             <div className='space-y-4'>
-              {/* ... (Champs de formulaire client/livraison inchangés) ... */}
               <input
                 type='text'
                 value={customerName}
@@ -492,7 +345,7 @@ const CartPage = () => {
                 className='w-full p-2 border rounded-md'
               />
 
-              {/* Choix méthode paiement (inchangé) */}
+              {/* Choix méthode paiement */}
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -505,25 +358,6 @@ const CartPage = () => {
               </select>
             </div>
 
-            {/* ✅ AJOUT : Affichage du statut de paiement */}
-            {paymentStatus.state !== 'idle' && paymentStatus.message && (
-              <div
-                className={`mt-4 p-3 rounded-lg font-medium ${
-                  paymentStatus.state === 'pending' ||
-                  paymentStatus.state === 'processing'
-                    ? 'bg-yellow-100 text-yellow-700 animate-pulse'
-                    : paymentStatus.state === 'success' ||
-                      paymentStatus.state === 'redirect'
-                    ? 'bg-green-100 text-green-700'
-                    : paymentStatus.state === 'error'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-blue-100 text-blue-700'
-                }`}
-              >
-                {paymentStatus.message}
-              </div>
-            )}
-
             <div className='mt-6'>
               <h3 className='text-2xl font-bold'>
                 {t('Total de la commande')}
@@ -533,17 +367,12 @@ const CartPage = () => {
               </p>
               <motion.button
                 onClick={handleValidateOrder}
-                className='w-full mt-6 bg-red-600 text-white font-bold py-3 px-6 rounded-full disabled:opacity-50'
+                className='w-full mt-6 bg-red-600 text-white font-bold py-3 px-6 rounded-full'
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                disabled={isValidationDisabled} // 👈 Utilisation du nouveau statut
+                disabled={cartItems.length === 0}
               >
-                {paymentStatus.state === 'pending'
-                  ? t('En attente de confirmation...')
-                  : paymentStatus.state === 'processing' ||
-                    paymentStatus.state === 'loading'
-                  ? t('Initialisation...')
-                  : t('Valider la commande')}
+                {t('Valider la commande')}
               </motion.button>
             </div>
           </div>
