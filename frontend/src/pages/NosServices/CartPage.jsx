@@ -1,3 +1,4 @@
+// frontend/src/pages/CartPage.jsx
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react'
@@ -32,21 +33,18 @@ const imageMap = {
 const CartPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  // L'appel à emptyCart est ici
   const { cart, handleUpdateCart, emptyCart } = useCart()
 
-  // Formulaire livraison + infos client
+  // Infos client
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [deliveryDetails, setDeliveryDetails] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState(
-    t('Paiement à la livraison')
-  )
+  const [paymentMethod, setPaymentMethod] = useState('cash')
 
-  // Charger tous les produits depuis API
+  // Charger produits depuis API
   const [allProducts, setAllProducts] = useState([])
   useEffect(() => {
     const fetchProducts = async () => {
@@ -58,7 +56,7 @@ const CartPage = () => {
         const data = await response.json()
         setAllProducts(data)
       } catch (err) {
-        console.error('Erreur lors du chargement des produits:', err)
+        console.error('Erreur chargement produits:', err)
       }
     }
     fetchProducts()
@@ -72,13 +70,10 @@ const CartPage = () => {
     return 0
   }
 
-  // Construire les items du panier
+  // Construire items panier
   const cartItems = Object.keys(cart || {})
     .map((cartId) => {
-      const parts = cartId.split('-')
-      const productId = parts[0]
-      const priceType = parts[1]
-
+      const [productId, priceType] = cartId.split('-')
       const product = allProducts.find((p) => p.id === productId)
       if (!product) return null
 
@@ -94,11 +89,9 @@ const CartPage = () => {
           itemName = `${t(product.name)} (${t('Gaz seul')})`
         } else {
           itemPrice = getPriceValue(product.price)
-          itemName = `${t(product.name)} (${t('Inconnu')})`
         }
       } else {
         itemPrice = getPriceValue(product.price)
-        itemName = t(product.name)
       }
 
       return {
@@ -118,10 +111,10 @@ const CartPage = () => {
     handleUpdateCart(id, -cart[id].quantity)
   }
 
-  // ✅ Validation de la commande (envoi backend)
+  // ✅ Validation de la commande
   const handleValidateOrder = async () => {
     if (cartItems.length === 0) {
-      alert(t('Votre panier est vide. Veuillez ajouter des articles.'))
+      alert(t('Votre panier est vide.'))
       return
     }
     if (!customerName || !customerEmail || !customerPhone) {
@@ -133,7 +126,6 @@ const CartPage = () => {
       return
     }
 
-    // Déclaration de l'objet de la commande
     const orderPayload = {
       customerName,
       customerEmail,
@@ -150,8 +142,8 @@ const CartPage = () => {
     }
 
     try {
-      // --- PAIEMENT A LA LIVRAISON ---
-      if (paymentMethod === 'Paiement à la livraison') {
+      // Paiement à la livraison
+      if (paymentMethod === 'cash') {
         const response = await fetch(
           'https://pleingaz-site-web.onrender.com/api/orders',
           {
@@ -160,30 +152,14 @@ const CartPage = () => {
             body: JSON.stringify(orderPayload),
           }
         )
-        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
         const data = await response.json()
 
-        // ✅ VIDER LE PANIER
         emptyCart()
-
-        const confirmationDetails = {
-          orderNumber: data.orderNumber || data.id,
-          totalAmount: calculateTotal(),
-          deliveryDate,
-          deliveryAddress,
-          paymentMethod,
-          items: cartItems,
-          customerName,
-          customerEmail,
-          customerPhone,
-        }
         navigate('/order-confirmation', {
-          state: { orderDetails: confirmationDetails },
+          state: { orderDetails: { ...orderPayload, orderId: data.id } },
         })
-
-        // --- PAIEMENT MOBILE MONEY ---
-      } else if (paymentMethod === 'Mobile Money (MTN/Orange)') {
-        // Étape 1 : Créer la commande sur le backend d'abord
+      } else {
+        // Autres paiements (mobile / carte)
         const orderResponse = await fetch(
           'https://pleingaz-site-web.onrender.com/api/orders',
           {
@@ -192,23 +168,14 @@ const CartPage = () => {
             body: JSON.stringify(orderPayload),
           }
         )
-
-        if (!orderResponse.ok) {
-          const errorData = await orderResponse.json()
-          throw new Error(
-            errorData.error ||
-              `Erreur HTTP ${orderResponse.status} lors de la création de la commande.`
-          )
-        }
         const orderData = await orderResponse.json()
-        const orderId = orderData.id
 
-        // Étape 2 : Initialiser le paiement avec le bon ID de commande
         const paymentPayload = {
           amount: calculateTotal(),
           phone: customerPhone,
           email: customerEmail,
-          orderId: orderId, // Utilisez l'ID de commande réel
+          orderId: orderData.id,
+          paymentMethod, // orange-money / mtn-momo / card
         }
 
         const paymentResponse = await fetch(
@@ -219,23 +186,16 @@ const CartPage = () => {
             body: JSON.stringify(paymentPayload),
           }
         )
-
-        if (!paymentResponse.ok) {
-          const errorData = await paymentResponse.json()
-          throw new Error(
-            errorData.message ||
-              `Erreur HTTP ${paymentResponse.status} lors de l'initialisation du paiement.`
-          )
-        }
         const paymentData = await paymentResponse.json()
-        console.log('✅ Payment initialized, redirecting...', paymentData)
+        console.log('✅ Payment initialized:', paymentData)
 
         if (paymentData.authorization_url) {
-          // ✅ VIDER LE PANIER JUSTE AVANT LA REDIRECTION EXTERNE
           emptyCart()
           window.location.href = paymentData.authorization_url
         } else {
-          alert("Erreur: L'URL de redirection de paiement est manquante.")
+          alert(
+            'Veuillez confirmer le paiement sur votre téléphone ou carte bancaire.'
+          )
         }
       }
     } catch (err) {
@@ -244,14 +204,12 @@ const CartPage = () => {
     }
   }
 
-  // Fonction utilitaire pour la date
   const getTomorrowDate = () => {
     const today = new Date()
     today.setDate(today.getDate() + 1)
     return today.toISOString().split('T')[0]
   }
 
-  // --- RENDU DU COMPOSANT ---
   return (
     <motion.div
       className='bg-gray-50 min-h-screen pt-24 pb-16'
@@ -266,7 +224,7 @@ const CartPage = () => {
           </h1>
           <motion.button
             onClick={() => navigate('/products')}
-            className='flex items-center text-red-600 font-semibold hover:text-red-700 transition-colors'
+            className='flex items-center text-red-600 font-semibold hover:text-red-700'
             whileHover={{ x: -5 }}
           >
             <ArrowLeft size={20} className='mr-2' />
@@ -275,9 +233,9 @@ const CartPage = () => {
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-          {/* Panier */}
+          {/* Liste panier */}
           <div className='lg:col-span-2 bg-white rounded-2xl shadow-xl p-8'>
-            <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
+            <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
               {t('Récapitulatif de votre commande')}
             </h2>
             <div className='space-y-6'>
@@ -285,7 +243,7 @@ const CartPage = () => {
                 cartItems.map((item) => (
                   <motion.div
                     key={item.id}
-                    className='flex items-center border-b border-gray-100 pb-4'
+                    className='flex items-center border-b pb-4'
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                   >
@@ -295,23 +253,21 @@ const CartPage = () => {
                       className='w-20 h-20 object-contain rounded-lg mr-4'
                     />
                     <div className='flex-1'>
-                      <h3 className='font-semibold text-lg text-gray-800'>
-                        {item.name}
-                      </h3>
+                      <h3 className='font-semibold text-lg'>{item.name}</h3>
                       <p className='text-sm text-gray-600'>
                         {item.quantity} x {item.price.toLocaleString('fr-CM')}{' '}
-                        {t('Fcfa')}
+                        Fcfa
                       </p>
                     </div>
-                    <div className='text-right flex flex-col items-end'>
+                    <div className='text-right'>
                       <p className='text-xl font-bold text-red-600'>
                         {(item.price * item.quantity).toLocaleString('fr-CM')}{' '}
-                        {t('Fcfa')}
+                        Fcfa
                       </p>
                       <div className='flex items-center space-x-2 mt-2'>
                         <button
                           onClick={() => handleUpdateCart(item.id, -1)}
-                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50'
+                          className='bg-gray-200 p-1 rounded-full'
                           disabled={item.quantity <= 1}
                         >
                           <Minus size={16} />
@@ -319,7 +275,7 @@ const CartPage = () => {
                         <span className='font-bold'>{item.quantity}</span>
                         <button
                           onClick={() => handleUpdateCart(item.id, 1)}
-                          className='bg-gray-200 text-gray-700 p-1 rounded-full hover:bg-gray-300'
+                          className='bg-gray-200 p-1 rounded-full'
                         >
                           <Plus size={16} />
                         </button>
@@ -334,27 +290,25 @@ const CartPage = () => {
                   </motion.div>
                 ))
               ) : (
-                <p className='text-center text-gray-500 text-lg'>
+                <p className='text-center text-gray-500'>
                   {t('Votre panier est vide.')}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Livraison + infos client */}
+          {/* Formulaire client */}
           <div className='bg-white rounded-2xl shadow-xl p-8'>
-            <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-4'>
+            <h2 className='text-2xl font-bold mb-6 border-b pb-4'>
               {t('Informations client et livraison')}
             </h2>
-            <div className='space-y-6'>
-              {/* Infos client */}
+            <div className='space-y-4'>
               <input
                 type='text'
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder={t('Votre nom complet')}
                 className='w-full p-2 border rounded-md'
-                required
               />
               <input
                 type='email'
@@ -362,7 +316,6 @@ const CartPage = () => {
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 placeholder={t('Votre email')}
                 className='w-full p-2 border rounded-md'
-                required
               />
               <input
                 type='tel'
@@ -370,17 +323,13 @@ const CartPage = () => {
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder={t('Votre numéro de téléphone')}
                 className='w-full p-2 border rounded-md'
-                required
               />
-
-              {/* Livraison */}
               <input
                 type='date'
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
                 min={getTomorrowDate()}
                 className='w-full p-2 border rounded-md'
-                required
               />
               <input
                 type='text'
@@ -388,41 +337,37 @@ const CartPage = () => {
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 placeholder={t('Adresse de livraison')}
                 className='w-full p-2 border rounded-md'
-                required
               />
               <textarea
                 value={deliveryDetails}
                 onChange={(e) => setDeliveryDetails(e.target.value)}
                 placeholder={t('Détails supplémentaires (optionnel)')}
-                rows='3'
                 className='w-full p-2 border rounded-md'
               />
 
-              {/* Paiement */}
+              {/* Choix méthode paiement */}
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className='w-full p-2 border rounded-md'
               >
-                <option value='Paiement à la livraison'>
-                  {t('Paiement à la livraison')}
-                </option>
-                <option value='Mobile Money (MTN/Orange)'>
-                  {t('Mobile Money (MTN/Orange)')}
-                </option>
+                <option value='cash'>💵 {t('Paiement à la livraison')}</option>
+                <option value='orange-money'>📱 {t('Orange Money')}</option>
+                <option value='mtn-momo'>📱 {t('MTN Mobile Money')}</option>
+                <option value='card'>💳 {t('Carte Bancaire')}</option>
               </select>
             </div>
 
-            <div className='mt-8'>
-              <h3 className='text-2xl font-bold text-gray-800'>
+            <div className='mt-6'>
+              <h3 className='text-2xl font-bold'>
                 {t('Total de la commande')}
               </h3>
-              <p className='text-4xl font-extrabold text-red-600 mt-2'>
-                {calculateTotal().toLocaleString('fr-CM')} {t('Fcfa')}
+              <p className='text-4xl font-extrabold text-red-600'>
+                {calculateTotal().toLocaleString('fr-CM')} Fcfa
               </p>
               <motion.button
                 onClick={handleValidateOrder}
-                className='w-full mt-6 bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg hover:bg-red-700 disabled:opacity-50'
+                className='w-full mt-6 bg-red-600 text-white font-bold py-3 px-6 rounded-full'
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={cartItems.length === 0}
