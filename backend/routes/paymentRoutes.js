@@ -9,15 +9,12 @@ dotenv.config()
 const router = express.Router()
 
 /** helper signature verify (HMAC SHA256) */
-function verifySignature(payload, signature, PUBLIC) {
-  if (!signature || !PUBLIC) return false
-  const hmac = crypto.createHmac('sha256', PUBLIC)
-  const expected = hmac.update(payload).digest('hex')
+function safeHexCompare(aHex, bHex) {
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected, 'hex'),
-      Buffer.from(signature, 'hex')
-    )
+    const a = Buffer.from(aHex, 'hex')
+    const b = Buffer.from(bHex, 'hex')
+    if (a.length !== b.length) return false
+    return crypto.timingSafeEqual(a, b)
   } catch {
     return false
   }
@@ -47,7 +44,7 @@ router.post('/initialize', async (req, res) => {
     }) // 2) Appel NotchPay
 
     const notchPayResponse = await fetch(
-      'https://api.notchpay.co/payments/initialize',
+      'https://api.notchpay.co/payments',
       {
         method: 'POST',
         headers: {
@@ -136,26 +133,51 @@ router.get('/verify/:reference', async (req, res) => {
  */
 router.post(
   '/webhook/notchpay',
-  express.raw({ type: 'application/json' }), // body raw
+  express.raw({ type: 'application/json' }), // IMPORTANT
   async (req, res) => {
     try {
-      const signature = req.headers['x-notch-signature']
-      const payload = req.body ? req.body.toString('utf8') : ''
-      const PUBLIC = process.env.NOTCHPAY_WEBHOOK_HASH
+      const signatureHeader = req.headers['x-notch-signature'] || ''
+      const payloadRaw = req.body ? req.body.toString('utf8') : ''
+      const secret = process.env.NOTCHPAY_WEBHOOK_HASH
 
-      if (!signature) {
-        console.log('🔎 Webhook test/validation reçu (pas de signature)')
+      // Logs pour debug (supprime/masque en prod si sensible)
+      console.log('--- WEBHOOK RAW ---')
+      console.log('x-notch-signature header:', signatureHeader)
+      console.log('payloadRaw:', payloadRaw)
+      console.log('secret present?', !!secret)
+
+      // Cas ping/test : NotchPay envoie parfois un body sans signature
+      if (!signatureHeader) {
+        console.log(
+          '🔎 Webhook test/validation reçu (pas de signature). Ack 200.'
+        )
         return res.status(200).send('Webhook endpoint verified')
       }
 
-      if (!verifySignature(payload, signature, PUBLIC)) {
-        console.error('❌ Invalid webhook signature')
+      // Si header a le préfixe 'sha256=' on l'enlève
+      const signature = signatureHeader.startsWith('sha256=')
+        ? signatureHeader.split('=')[1]
+        : signatureHeader
+
+      // Calcul HMAC SHA256 en hex
+      const hmac = crypto.createHmac('sha256', secret || '')
+      hmac.update(payloadRaw)
+      const expected = hmac.digest('hex')
+
+      if (!safeHexCompare(expected, signature)) {
+        console.error(
+          '❌ Invalid webhook signature — expected',
+          expected,
+          'got',
+          signature
+        )
         return res.status(403).send('Invalid signature')
       }
 
-      const event = JSON.parse(payload)
-      console.log('📩 Webhook validé:', event)
+      const event = JSON.parse(payloadRaw)
+      console.log('📩 Webhook validé:', event?.type, event?.data || '')
 
+      // récupérer référence
       const ref =
         event?.data?.merchant_reference ||
         event?.data?.trxref ||
@@ -167,22 +189,28 @@ router.post(
           where: { reference: ref },
           data: { status: 'complete', notchData: event },
         })
-        console.log('✅ Transaction mise à jour en complete pour', ref)
+        console.log('✅ Transaction mise à jour complete pour', ref)
       } else if (event.type === 'payment.failed' && ref) {
         await prisma.transaction.updateMany({
           where: { reference: ref },
           data: { status: 'failed', notchData: event },
         })
-        console.log('❌ Transaction mise à jour en failed pour', ref)
+        console.log('❌ Transaction mise à jour failed pour', ref)
+      } else {
+        console.log(
+          'ℹ️ Événement reçu sans ref connue ou non géré:',
+          event.type
+        )
       }
 
       return res.status(200).send('Webhook reçu et validé')
-    } catch (error) {
-      console.error('Erreur Webhook:', error)
+    } catch (err) {
+      console.error('Erreur Webhook:', err)
       return res.status(500).send('Erreur serveur')
     }
   }
 )
+
 
 /** callback (utilisé quand l'utilisateur revient après paiement) */
 router.get('/callback', async (req, res) => {
