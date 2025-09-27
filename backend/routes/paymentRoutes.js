@@ -376,7 +376,7 @@ router.get('/callback', async (req, res) => {
         })
       }
       return res.redirect(
-        'https://pleingaz-site-web.vercel.app/order-confirmation?ref'=txRef
+        `https://pleingaz-site-web.vercel.app/order-confirmation?ref=${txRef}`
       )
     } else {
       // Not completed
