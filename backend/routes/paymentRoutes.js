@@ -45,7 +45,7 @@ function formatPhoneCameroon(raw) {
 
 /**
  * POST /api/payments/initialize
- * Version optimisée pour flux actuel + préparation flux direct
+ * Version corrigée sans canaux spécifiques
  */
 router.post('/initialize', async (req, res) => {
   try {
@@ -111,7 +111,7 @@ router.post('/initialize', async (req, res) => {
       },
     })
 
-    // 3) Configuration NotchPay
+    // 3) Configuration NotchPay - VERSION CORRIGÉE
     let notchBody = {
       amount: transaction.amount,
       currency: 'XAF',
@@ -122,22 +122,17 @@ router.post('/initialize', async (req, res) => {
       callback: 'https://pleingaz-site-web.onrender.com/api/payments/callback',
     }
 
-    // Configuration selon le type de paiement
+    // Configuration selon le type de paiement - SIMPLIFIÉ
     if (paymentMethod === 'momo.mtn' || paymentMethod === 'momo.orange') {
       notchBody.payment_method = 'mobile_money'
-      // Tentative de forcer le canal direct (préparation pour quand compte sera activé)
-      if (paymentMethod === 'momo.mtn') {
-        notchBody.channel = 'cm.mtn'
-      } else {
-        notchBody.channel = 'cm.orange'
-      }
+      // Pas de canal spécifique pour éviter l'erreur 500
     } else if (paymentMethod === 'card') {
       notchBody.payment_method = 'card'
     }
 
     console.log('NotchPay request:', JSON.stringify(notchBody, null, 2))
 
-    const notchResp = await fetch('https://api.notchpay.co/payments', {
+    const notchResponse = await fetch('https://api.notchpay.co/payments', {
       method: 'POST',
       headers: {
         Authorization: `${process.env.NOTCH_PUBLIC_KEY}`,
@@ -146,10 +141,10 @@ router.post('/initialize', async (req, res) => {
       body: JSON.stringify(notchBody),
     })
 
-    const notchData = await notchResp.json()
+    const notchData = await notchResponse.json()
     console.log('NotchPay response:', JSON.stringify(notchData, null, 2))
 
-    if (!notchResp.ok || notchData.code !== 201) {
+    if (!notchResponse.ok || notchData.code !== 201) {
       throw new Error(notchData.message || 'Erreur NotchPay')
     }
 
@@ -213,13 +208,13 @@ router.get('/verify/:reference', async (req, res) => {
       return res.status(400).json({ error: 'Référence manquante' })
     }
 
-    const response = await fetch(
+    const verifyResponse = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: { Authorization: `${process.env.NOTCH_PUBLIC_KEY}` },
       }
     )
-    const data = await response.json()
+    const data = await verifyResponse.json()
     console.log('Payment verification:', JSON.stringify(data, null, 2))
 
     const txRef = data.transaction?.reference || reference
@@ -378,13 +373,13 @@ router.get('/callback', async (req, res) => {
       return res.status(400).send('Missing reference')
     }
 
-    const response = await fetch(
+    const callbackResponse = await fetch(
       `https://api.notchpay.co/payments/${reference}`,
       {
         headers: { Authorization: `${process.env.NOTCH_PUBLIC_KEY}` },
       }
     )
-    const data = await response.json()
+    const data = await callbackResponse.json()
     console.log('Callback verify:', JSON.stringify(data, null, 2))
 
     const txRef = data.transaction?.reference || reference
