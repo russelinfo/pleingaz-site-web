@@ -78,7 +78,7 @@ const Contact = () => {
           </h2>
           <div className='flex items-center space-x-4'>
             <Mail className='text-red-600 w-6 h-6' />
-            <span className='text-gray-700'>support@pleingaz.com</span>
+            <span className='text-gray-700'>sales@monpleingaz.com</span>
           </div>
           <div className='flex items-center space-x-4'>
             <Phone className='text-red-600 w-6 h-6' />

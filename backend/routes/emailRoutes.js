@@ -25,7 +25,7 @@ router.post('/contact', async (req, res) => {
   }
 
   // 🎯 Remplacez par votre propre adresse e-mail pour recevoir les messages
-  const RECIPIENT_EMAIL = 'yemelirussel@gmail.com'
+  const RECIPIENT_EMAIL = 'sales@monpleingaz.com'
 
   try {
     const { data, error } = await resend.emails.send({
