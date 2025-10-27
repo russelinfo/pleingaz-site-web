@@ -39,7 +39,7 @@ const programs = [
   'Programme pour l’emploi de la Femme',
   'Programme pour l’emploi de la Jeunesse',
   'Formation sur la bonne gouvernance',
-  'Accompagnement pour la certification ISO',
+  'Support pour les Etudiants',
 ]
 
 const About = () => {

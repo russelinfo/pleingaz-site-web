@@ -2,7 +2,7 @@
   "Contact": "Contact",
   "FAQ": "FAQ",
   "Mon compte": "Mon compte",
-  "Nos agences": "Nos agences",
+  "Nos points de vente": "Nos points de vente",
   "Rechercher...": "Rechercher...",
   "Accueil": "Accueil",
   "A propos": "À propos",
@@ -271,6 +271,6 @@
   "Envoyer mon avis": "Envoyer mon avis",
   "Veuillez donner une note en étoiles.": "Veuillez donner une note en étoiles.",
   "Merci pour votre avis ! Il sera visible après validation.": "Merci pour votre avis ! Il sera visible après validation.",
-  "agencies.title": "Nos Agences",
-  "agencies.description": "Retrouvez toutes nos agences directement sur la carte interactive."
+  "agencies.title": "Nos points de vente",
+  "agencies.description": "Retrouvez toutes nos points de vente directement sur la carte interactive."
 }

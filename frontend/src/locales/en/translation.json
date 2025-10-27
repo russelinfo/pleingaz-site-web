@@ -2,7 +2,7 @@
   "Contact": "Contact",
   "FAQ": "FAQ",
   "Mon compte": "My account",
-  "Nos agences": "Our agencies",
+  "Nos points de vente": "Our Points of Sale",
   "Rechercher...": "Search...",
   "Accueil": "Home",
   "A propos": "About",
@@ -271,6 +271,6 @@
   "Envoyer mon avis": "Submit my review",
   "Veuillez donner une note en étoiles.": "Please provide a star rating.",
   "Merci pour votre avis ! Il sera visible après validation.": "Thank you for your review! It will be visible after validation.",
-  "agencies.title": "Our Agencies",
-  "agencies.description": "Find all our agencies directly on the interactive map."
+  "agencies.title": "Our Points of Sale",
+  "agencies.description": "Find all our  Points of Saledirectly on the interactive map."
 }
