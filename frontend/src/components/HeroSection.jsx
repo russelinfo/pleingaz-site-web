@@ -37,8 +37,7 @@ const HeroSection = () => {
           className='text-lg sm:text-xl leading-relaxed text-gray-100 mb-10'
         >
           {t(
-            "Chez PLEINGAZ, nous croyons que l'accès à une énergie de qualité ne devrait jamais être un souci. " +
-              'Nous garantissons une livraison rapide et des accessoires certifiés pour votre sécurité et votre tranquillité d’esprit.'
+            "Depuis 2015, PleinGaz alimente les foyers du Cameroun avec fiabilité, sécurité et passion. Notre mission est simple : offrir une énergie accessible à tous, grâce à un réseau solide, des produits certifiés et un service de proximité. Avec PleinGaz, chaque foyer profite d’une énergie sûre et toujours disponible."
           )}
         </motion.p>
 
