@@ -299,7 +299,7 @@ const Header = () => {
                 onClick={toggleMenu}
                 className='py-4 flex items-center hover:text-red-600'
               >
-                <FaMapMarkerAlt className='mr-2' /> {t('Nos agences')}
+                <FaMapMarkerAlt className='mr-2' /> {t('agencies.title')}
               </NavLink>
             </nav>
 

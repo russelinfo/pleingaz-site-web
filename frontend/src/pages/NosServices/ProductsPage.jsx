@@ -67,7 +67,7 @@ const ProductsPage = () => {
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen text-gray-700'>
-        Chargement des produits...
+        {t('Chargement des produits...')}
       </div>
     )
   }
