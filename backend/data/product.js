@@ -1,4 +1,4 @@
-// src//products.js (Nouveau fichier unifié)
+
 
 const products = [
   {
