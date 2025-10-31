@@ -42,12 +42,24 @@ const Header = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
+  // ✅ Assure que la langue reste mémorisée et s'applique instantanément
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('i18nextLng') || 'fr'
+    setSelectedLang(savedLang)
+    i18n.changeLanguage(savedLang)
+  }, [])
 
   // ✅ Ajout : Fonction pour gérer le changement de langue
   const handleLanguageChange = (e) => {
     const newLang = e.target.value
     setSelectedLang(newLang)
+
+    // ✅ Change la langue immédiatement
     i18n.changeLanguage(newLang)
+
+    // ✅ Sauvegarde la langue pour qu'elle soit retenue
+    localStorage.setItem('i18nextLng', newLang)
   }
 
   return (
@@ -76,7 +88,7 @@ const Header = () => {
               to='/agences'
               className='flex items-center hover:text-red-600'
             >
-              <FaMapMarkerAlt className='mr-1' /> {t('Nos agences')}
+              <FaMapMarkerAlt className='mr-1' /> {t('agencies.title')}
             </NavLink>
           </div>
 
@@ -162,9 +174,8 @@ const Header = () => {
           {/* Logo */}
           <div className='flex-shrink-0 flex justify-center md:justify-start mb-3 md:mb-0'>
             <NavLink to='/'>
-             <img src={logo} alt='Logo' className='h-16 w-auto' /> 
-             </NavLink>
-            
+              <img src={logo} alt='Logo' className='h-16 w-auto' />
+            </NavLink>
           </div>
 
           {/* Recherche Mobile visible */}

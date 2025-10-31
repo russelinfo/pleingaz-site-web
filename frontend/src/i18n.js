@@ -2,29 +2,31 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
-// Importez vos fichiers de traduction
+// Import des fichiers de traductions
 import translationEN from './locales/en/translation.json'
 import translationFR from './locales/fr/translation.json'
 
-
 const resources = {
-  en: {
-    translation: translationEN,
-  },
-  fr: {
-    translation: translationFR,
-  },
+  en: { translation: translationEN },
+  fr: { translation: translationFR },
 }
 
 i18n
-  .use(LanguageDetector) // Détecte la langue de l'utilisateur
-  .use(initReactI18next) // Lie i18n à React
+  .use(LanguageDetector)
+  .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'fr', // Langue par défaut en cas d'erreur
-    debug: true, // Désactivez-le en production
+    fallbackLng: 'fr',
+    debug: false,
+
+    // ✅ Empêche la redétection continue (cause de la latence)
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+    },
+
     interpolation: {
-      escapeValue: false, // Ne pas échapper le code HTML
+      escapeValue: false,
     },
   })
 

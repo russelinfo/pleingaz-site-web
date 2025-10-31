@@ -36,9 +36,7 @@ const HeroSection = () => {
           transition={{ duration: 1, delay: 0.5 }}
           className='text-lg sm:text-xl leading-relaxed text-gray-100 mb-10'
         >
-          {t(
-            "Depuis 2015, PleinGaz alimente les foyers du Cameroun avec fiabilité, sécurité et passion. Notre mission est simple : offrir une énergie accessible à tous, grâce à un réseau solide, des produits certifiés et un service de proximité. Avec PleinGaz, chaque foyer profite d’une énergie sûre et toujours disponible."
-          )}
+          {t('hero.message')}
         </motion.p>
 
         {/* ✅ Icônes et avantages */}
