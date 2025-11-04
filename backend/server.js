@@ -9,9 +9,11 @@ import emailRoutes from './routes/emailRoutes.js'
 
 dotenv.config()
 const app = express()
+
+// ✅ Port dynamique pour Railway (sinon 5000 en local)
 const PORT = process.env.PORT || 5000
 
-// Middleware pour gérer les requêtes CORS
+// ✅ CORS : autoriser ton frontend hébergé sur Vercel
 app.use(
   cors({
     origin: 'https://pleingaz-site-web.vercel.app',
@@ -22,22 +24,22 @@ app.use(
 // ⚠️ Important : ne pas parser JSON pour la route webhook
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/payments/webhook/notchpay') {
-    next() // on laisse express.raw() du fichier route gérer le body
+    next() // express.raw() dans la route gère le body
   } else {
-    express.json()(req, res, next) // sinon on parse en JSON normalement
+    express.json()(req, res, next) // sinon, parser normalement
   }
 })
 
-// Routes
+// ✅ Routes principales
 app.use('/api/payments', paymentRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/emails', emailRoutes)
 app.use('/api/products', productRoutes)
 
-// Route racine
+// ✅ Route racine
 app.get('/', (_req, res) => res.send('PleinGaz backend — payments API'))
 
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+// ✅ Correction : écouter sur 0.0.0.0 (pas localhost)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`)
 })
