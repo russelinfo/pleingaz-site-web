@@ -37,6 +37,7 @@ app.use('/api/products', productRoutes)
 // Route racine
 app.get('/', (_req, res) => res.send('PleinGaz backend — payments API'))
 
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
