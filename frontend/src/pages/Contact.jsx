@@ -22,7 +22,7 @@ const Contact = () => {
 
     try {
       const response = await fetch(
-        'https://pleingaz-backend.onrender.com/api/emails/contact', // 💡 Mettez à jour avec l'URL de votre backend
+        'https://pleingaz-site-web-d7b9.onrender.com/api/emails/contact', // 💡 Mettez à jour avec l'URL de votre backend
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

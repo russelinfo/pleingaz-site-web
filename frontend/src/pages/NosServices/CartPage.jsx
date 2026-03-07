@@ -29,8 +29,7 @@ const imageMap = {
   'bruleur.png': bruleur,
 }
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || 'https://pleingaz-backend.onrender.com'
+const BACKEND_URL ='https://pleingaz-site-web-d7b9.onrender.com'
 
 function formatPhoneCameroon(raw) {
   if (!raw) return raw

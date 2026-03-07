@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5000
 // ✅ CORS : autoriser ton frontend hébergé sur Vercel
 app.use(
   cors({
-    origin: 'https://monpleingaz.com',
+    origin: ['https://monpleingaz.com', 'https://www.monpleingaz.com'],
     credentials: true,
   }),
 )

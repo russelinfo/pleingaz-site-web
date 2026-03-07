@@ -40,7 +40,7 @@ const BlogPage = () => {
     try {
       // 🎯 Appel à votre route API /api/emails/subscribe
       const response = await fetch(
-        'https://pleingaz-backend.onrender.com/api/emails/subscribe', // 👈 VÉRIFIEZ ET REMPLACEZ SI NÉCESSAIRE
+        'https://pleingaz-site-web-d7b9.onrender.com/api/emails/subscribe', // 👈 VÉRIFIEZ ET REMPLACEZ SI NÉCESSAIRE
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

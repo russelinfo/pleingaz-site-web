@@ -26,7 +26,7 @@ const OrderConfirmationPage = () => {
         // Cas du paiement Mobile Money
         try {
           const response = await fetch(
-            `https://pleingaz-backend.onrender.com/api/orders/by-transaction/${transactionRef}`,
+            `https://pleingaz-site-web-d7b9.onrender.com/api/orders/by-transaction/${transactionRef}`,
           )
           if (!response.ok) {
             throw new Error('Commande non trouvée')

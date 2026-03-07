@@ -45,7 +45,7 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          'https://pleingaz-backend.onrender.com/api/products',
+          'https://pleingaz-site-web-d7b9.onrender.com/api/products',
         )
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`)
