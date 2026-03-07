@@ -1,94 +1,68 @@
-// schema.prisma
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// =====================
-//   TABLE : Product
-// =====================
 model Product {
-  id              String    @id @default(uuid())
-  name            String
-  description     String
-  shortDescription String?
-  image           String
-  fullPrice       Int?
-  emptyPrice      Int?
-  price           Int?
-  isGasBottle     Boolean    @default(false)
-  inStock         Boolean    @default(true)
-
-  // Relation avec OrderItem
-  orderItems      OrderItem[]
+  id               String      @id @default(uuid())
+  name             String
+  description      String
+  shortDescription String?
+  image            String
+  fullPrice        Int?
+  emptyPrice       Int?
+  price            Int?
+  isGasBottle      Boolean     @default(false)
+  inStock          Boolean     @default(true)
+  orderItems       OrderItem[]
 }
 
-// =====================
-//   TABLE : Order
-// =====================
 model Order {
-  id             Int           @id @default(autoincrement())
-  customerName   String
-  customerEmail  String
-  customerPhone  String
-  deliveryAddress String
-  totalAmount    Int
-  status         String        @default("pending") // pending, paid, delivered
-  paymentMethod  String        // cash, mobile_money
-  createdAt      DateTime      @default(now())
-
-  // Relations
-  items          OrderItem[]
-  // AJOUTEZ CE CHAMP POUR LE CÔTÉ OPPOSÉ DE LA RELATION
-  transactions   Transaction[]
+  id              Int           @id @default(autoincrement())
+  totalAmount     Int
+  deliveryAddress String
+  paymentMethod   String
+  status          String        @default("pending")
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  createdAt       DateTime      @default(now())
+  items           OrderItem[]
+  transactions    Transaction[]
 }
 
-// =====================
-//   TABLE : OrderItem
-// =====================
 model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  productId String
-  quantity  Int
-  unitPrice Int
-
-  // Relations
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId String
+  quantity  Int
+  unitPrice Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
-// =====================
-//   TABLE : Transaction
-// =====================
 model Transaction {
   id             Int      @id @default(autoincrement())
-  reference      String   @unique                     // ta référence interne (merchant_reference)
-  notchReference String?                               // référence fournie par NotchPay (trx.xxxx)
-  status         String
+  reference      String   @unique
   amount         Int
-  currency       String   @default("XAF")
-  customerName   String?
-  customerEmail  String?
-  customerPhone  String?
-  notchData      Json?                                  // stockage de la réponse NotchPay
+  status         String
   createdAt      DateTime @default(now())
-
-  orderId Int?
-  order   Order? @relation(fields: [orderId], references: [id])
+  orderId        Int?
+  currency       String   @default("XAF")
+  customerEmail  String?
+  customerName   String?
+  customerPhone  String?
+  notchData      Json?
+  notchReference String?
+  order          Order?   @relation(fields: [orderId], references: [id])
 }
-
-// =====================
-//   TABLE : sbscribe
-// =====================
 
 model Subscriber {
   id           String   @id @default(uuid())
-  email        String   @unique // Assure qu'une seule adresse est stockée
-  subscribedAt DateTime @default(now()) // Timestamp de l'inscription
-
+  email        String   @unique
+  subscribedAt DateTime @default(now())
 }

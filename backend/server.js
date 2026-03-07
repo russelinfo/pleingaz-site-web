@@ -16,9 +16,9 @@ const PORT = process.env.PORT || 5000
 // ✅ CORS : autoriser ton frontend hébergé sur Vercel
 app.use(
   cors({
-    origin: 'https://pleingaz-site-web.vercel.app',
+    origin: 'https://monpleingaz.com',
     credentials: true,
-  })
+  }),
 )
 
 // ⚠️ Important : ne pas parser JSON pour la route webhook
