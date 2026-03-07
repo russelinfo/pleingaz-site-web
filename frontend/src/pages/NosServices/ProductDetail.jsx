@@ -56,7 +56,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://pleingaz-site-web.onrender.com/api/products/${id}`
+          `https://pleingaz-backend.onrender.com/api/products/${id}`,
         )
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`)

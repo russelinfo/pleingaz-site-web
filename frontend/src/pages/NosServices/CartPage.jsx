@@ -30,7 +30,7 @@ const imageMap = {
 }
 
 const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || 'https://pleingaz-site-web.onrender.com'
+  process.env.REACT_APP_BACKEND_URL || 'https://pleingaz-backend.onrender.com'
 
 function formatPhoneCameroon(raw) {
   if (!raw) return raw
